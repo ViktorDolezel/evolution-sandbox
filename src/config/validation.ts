@@ -82,7 +82,7 @@ export function validateConfig(config: SimulationConfig): ValidationResult {
 
   // Validate and clamp each category
   for (const [category, ranges] of Object.entries(CONFIG_RANGES)) {
-    const categoryConfig = clampedConfig[category as keyof SimulationConfig] as Record<string, number>;
+    const categoryConfig = clampedConfig[category as keyof SimulationConfig] as unknown as Record<string, number>;
 
     for (const [key, range] of Object.entries(ranges)) {
       const value = categoryConfig[key];

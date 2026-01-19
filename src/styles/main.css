@@ -117,3 +117,130 @@ input[type="range"] {
 .text-green { color: #4ade80; }
 .text-yellow { color: #facc15; }
 .text-red { color: #f87171; }
+
+/* Info panel rows */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 2px 0;
+}
+
+/* Control panel */
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ccc;
+}
+
+#speed-slider {
+  width: 100px;
+}
+
+#speed-value {
+  min-width: 40px;
+  text-align: right;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sidebar sections */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #333;
+  background: rgba(40, 40, 60, 0.8);
+  position: sticky;
+  top: 0;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #fff;
+  background: transparent;
+}
+
+.sidebar-section {
+  padding: 12px 15px;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-section h4 {
+  margin: 0 0 8px 0;
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  color: #ccc;
+  font-size: 13px;
+}
+
+.stat-row span:first-child {
+  color: #999;
+}
+
+.hunger-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hunger-bar-container {
+  width: 60px;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hunger-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f87171 0%, #facc15 50%, #4ade80 100%);
+  transition: width 0.2s;
+}
+
+/* Graph panel adjustments when sidebar is open */
+#sidebar.visible ~ #graph-panel {
+  right: 300px;
+}
+
+#graph-panel:not(.visible) ~ #sidebar {
+  right: 0;
+}
+
+/* Canvas cursor */
+#simulation-canvas {
+  cursor: grab;
+}
+
+#simulation-canvas:active {
+  cursor: grabbing;
+}

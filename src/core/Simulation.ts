@@ -3,7 +3,7 @@ import type { World } from './World';
 import type { Animal, Corpse } from '../entities/types';
 import { createWorld, initializePopulation } from './World';
 import { runTick } from './TickLoop';
-import { createEventEmitter, EventEmitter } from '../utils/events';
+import { createEventEmitter } from '../utils/events';
 
 export interface SimulationEvents {
   tick: { tick: number; deerCount: number; wolfCount: number; vegetationCount: number };
@@ -16,7 +16,7 @@ export interface SimulationEvents {
   reset: void;
 }
 
-export interface Simulation {
+export interface ISimulation {
   // State
   readonly world: World;
   readonly config: SimulationConfig;
@@ -44,7 +44,7 @@ export interface Simulation {
   ): void;
 }
 
-export function createSimulation(config: SimulationConfig, seed?: number): Simulation {
+export function createSimulation(config: SimulationConfig, seed?: number): ISimulation {
   const actualSeed = seed ?? Date.now();
   let world = createWorld(config, actualSeed);
   initializePopulation(world);
@@ -115,7 +115,7 @@ export function createSimulation(config: SimulationConfig, seed?: number): Simul
     animationFrameId = requestAnimationFrame(gameLoop);
   }
 
-  const simulation: Simulation = {
+  const simulation: ISimulation = {
     get world() {
       return world;
     },
@@ -192,8 +192,8 @@ export function createSimulation(config: SimulationConfig, seed?: number): Simul
 }
 
 // Re-export class for backwards compatibility
-export class SimulationClass implements Simulation {
-  private _sim: Simulation;
+export class SimulationClass implements ISimulation {
+  private _sim: ISimulation;
 
   constructor(config: SimulationConfig, seed?: number) {
     this._sim = createSimulation(config, seed);

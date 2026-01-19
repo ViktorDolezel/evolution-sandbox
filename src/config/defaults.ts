@@ -7,8 +7,8 @@ export function getDefaultConfig(): SimulationConfig {
       WORLD_HEIGHT: 800,
       VEGETATION_TILE_SIZE: 5,
       TICK_RATE: 10,
-      INITIAL_DEER_COUNT: 20,
-      INITIAL_WOLF_COUNT: 5,
+      INITIAL_DEER_COUNT: 200,
+      INITIAL_WOLF_COUNT: 200,
       INITIAL_SPAWN_MIN_DISTANCE: 50,
     },
     vegetation: {

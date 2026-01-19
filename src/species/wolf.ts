@@ -8,7 +8,7 @@ export const WOLF_DIET: DietFlags = {
 
 export const WOLF_BASE_ATTRIBUTES: BaseAttributes = {
   strength: 12,
-  agility: 10,
+  agility: 15,
   endurance: 8,
   perception: 10,
   size: 1.2,

@@ -15,7 +15,12 @@
     "type": "git",
     "url": "git+https://github.com/ViktorDolezel/evolution-sandbox.git"
   },
-  "keywords": ["evolution", "simulation", "predator-prey", "natural-selection"],
+  "keywords": [
+    "evolution",
+    "simulation",
+    "predator-prey",
+    "natural-selection"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -23,6 +28,7 @@
   },
   "homepage": "https://github.com/ViktorDolezel/evolution-sandbox#readme",
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.17",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.17"

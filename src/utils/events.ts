@@ -1,13 +1,15 @@
 export type EventCallback<T = unknown> = (data: T) => void;
 
-export interface EventEmitter<Events extends Record<string, unknown>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface EventEmitter<Events extends { [K in keyof Events]: any }> {
   on<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void;
   off<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void;
   emit<K extends keyof Events>(event: K, data: Events[K]): void;
   once<K extends keyof Events>(event: K, callback: EventCallback<Events[K]>): void;
 }
 
-export function createEventEmitter<Events extends Record<string, unknown>>(): EventEmitter<Events> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createEventEmitter<Events extends { [K in keyof Events]: any }>(): EventEmitter<Events> {
   const listeners = new Map<keyof Events, Set<EventCallback<unknown>>>();
 
   return {

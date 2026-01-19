@@ -51,7 +51,7 @@ describe('Animal', () => {
 
       expect(animal.species).toBe('wolf');
       expect(animal.baseAttributes.strength).toBe(12);
-      expect(animal.baseAttributes.aggression).toBeUndefined; // Base attributes don't include behavioral
+      expect((animal.baseAttributes as unknown as Record<string, unknown>)['aggression']).toBeUndefined(); // Base attributes don't include behavioral
       expect(animal.behavioralAttributes.aggression).toBe(0.6);
       expect(animal.diet.canEatAnimals).toBe(true);
       expect(animal.diet.canEatCorpses).toBe(true);

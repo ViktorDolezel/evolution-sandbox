@@ -208,20 +208,30 @@ describe('DecisionEngine', () => {
     });
 
     it('returns false when attackPower <= defense', () => {
-      const deer = createAnimal(
-        { species: 'deer', position: { x: 100, y: 100 } },
+      // Create a weak deer and a strong wolf with high defense
+      const weakDeer = createAnimal(
+        {
+          species: 'deer',
+          position: { x: 100, y: 100 },
+          baseAttributes: { strength: 3, size: 0.5 },
+        },
         config,
         deerIdGen
       );
-      const wolf = createAnimal(
-        { species: 'wolf', position: { x: 105, y: 100 } },
+      const strongWolf = createAnimal(
+        {
+          species: 'wolf',
+          position: { x: 105, y: 100 },
+          baseAttributes: { size: 2.0, agility: 15 },
+        },
         config,
         wolfIdGen
       );
 
-      // Deer attackPower ≈ 5, Wolf defense ≈ 4.6
-      // This is close, but deer is weaker
-      expect(canKill(deer, wolf)).toBe(false);
+      // Weak deer attackPower = 3 * sqrt(0.5) ≈ 2.12
+      // Strong wolf defense = 2.0 * (1 + 15 * 0.3) = 2.0 * 5.5 = 11
+      // 2.12 < 11, so deer cannot kill wolf
+      expect(canKill(weakDeer, strongWolf)).toBe(false);
     });
 
     it('returns true for large strong attacker vs small weak defender', () => {

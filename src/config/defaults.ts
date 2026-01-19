@@ -3,8 +3,8 @@ import type { SimulationConfig } from './types';
 export function getDefaultConfig(): SimulationConfig {
   return {
     world: {
-      WORLD_WIDTH: 500,
-      WORLD_HEIGHT: 500,
+      WORLD_WIDTH: 300,
+      WORLD_HEIGHT: 300,
       VEGETATION_TILE_SIZE: 5,
       TICK_RATE: 10,
       INITIAL_DEER_COUNT: 10,

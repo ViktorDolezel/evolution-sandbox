@@ -121,6 +121,9 @@ export class UIManager {
           this.helpDialog.show();
         }
       },
+      onToggleVisualization: () => {
+        this.controlPanel.toggleVisualization();
+      },
     });
 
     // Wire up selection events
@@ -145,6 +148,14 @@ export class UIManager {
     this.controlPanel.on('reset', () => {
       this.populationHistory.clear();
       this.selectionManager.deselect();
+    });
+
+    this.controlPanel.on('toggleVisualization', ({ visible }) => {
+      this.renderer.setOptions({
+        showAnimals: visible,
+        showVegetation: visible,
+        showCorpses: visible,
+      });
     });
 
     // Handle window resize

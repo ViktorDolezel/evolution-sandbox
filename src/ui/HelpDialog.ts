@@ -9,6 +9,7 @@ const KEYBOARD_SHORTCUTS = [
   { key: 'Space', description: 'Play/Pause simulation' },
   { key: 'I', description: 'Toggle info panel' },
   { key: 'G', description: 'Toggle population graph' },
+  { key: 'V', description: 'Toggle world visualization' },
   { key: '?', description: 'Show this help dialog' },
   { key: 'Escape', description: 'Close dialog / Deselect entity' },
   { key: 'Tab', description: 'Select next entity' },

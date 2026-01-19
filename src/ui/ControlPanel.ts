@@ -9,11 +9,13 @@ export interface ControlPanelEvents {
   reset: void;
   step: void;
   configImported: { config: SimulationConfig; warnings: string[] };
+  toggleVisualization: { visible: boolean };
 }
 
 export interface ControlPanel {
   syncState(simulation: Simulation): void;
   setSpeed(speed: number): void;
+  toggleVisualization(): void;
   on<K extends keyof ControlPanelEvents>(event: K, callback: (data: ControlPanelEvents[K]) => void): void;
   off<K extends keyof ControlPanelEvents>(event: K, callback: (data: ControlPanelEvents[K]) => void): void;
   destroy(): void;
@@ -35,6 +37,7 @@ export function createControlPanel(
       <span id="speed-value">1.0x</span>
     </div>
     <button id="reset-btn" title="Reset simulation">Reset</button>
+    <button id="toggle-viz-btn" title="Toggle world visualization (V)">Hide World</button>
     <div class="config-controls">
       <button id="export-config-btn" title="Export configuration">Export</button>
       <button id="import-config-btn" title="Import configuration">Import</button>
@@ -46,8 +49,11 @@ export function createControlPanel(
   const speedSlider = container.querySelector('#speed-slider') as HTMLInputElement;
   const speedValue = container.querySelector('#speed-value') as HTMLSpanElement;
   const resetBtn = container.querySelector('#reset-btn') as HTMLButtonElement;
+  const toggleVizBtn = container.querySelector('#toggle-viz-btn') as HTMLButtonElement;
   const exportBtn = container.querySelector('#export-config-btn') as HTMLButtonElement;
   const importBtn = container.querySelector('#import-config-btn') as HTMLButtonElement;
+
+  let visualizationVisible = true;
 
   function updatePlayPauseButton(isPaused: boolean): void {
     playPauseBtn.textContent = isPaused ? 'Play' : 'Pause';
@@ -57,6 +63,12 @@ export function createControlPanel(
   function updateSpeedDisplay(speed: number): void {
     speedValue.textContent = `${speed.toFixed(1)}x`;
     speedSlider.value = String(speed);
+  }
+
+  function doToggleVisualization(): void {
+    visualizationVisible = !visualizationVisible;
+    toggleVizBtn.textContent = visualizationVisible ? 'Hide World' : 'Show World';
+    emitter.emit('toggleVisualization', { visible: visualizationVisible });
   }
 
   // Event handlers
@@ -93,6 +105,8 @@ export function createControlPanel(
     }
   });
 
+  toggleVizBtn.addEventListener('click', doToggleVisualization);
+
   exportBtn.addEventListener('click', () => {
     downloadConfigFile(simulation.config, 'evolution-sandbox-config.json');
   });
@@ -124,6 +138,10 @@ export function createControlPanel(
     setSpeed(speed: number): void {
       simulation.setSpeed(speed);
       updateSpeedDisplay(speed);
+    },
+
+    toggleVisualization(): void {
+      doToggleVisualization();
     },
 
     on<K extends keyof ControlPanelEvents>(

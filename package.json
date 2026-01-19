@@ -1,0 +1,30 @@
+{
+  "name": "evolution-sandbox",
+  "version": "1.0.0",
+  "description": "Browser-based 2D evolution simulation with predator-prey dynamics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ViktorDolezel/evolution-sandbox.git"
+  },
+  "keywords": ["evolution", "simulation", "predator-prey", "natural-selection"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ViktorDolezel/evolution-sandbox/issues"
+  },
+  "homepage": "https://github.com/ViktorDolezel/evolution-sandbox#readme",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.17"
+  }
+}

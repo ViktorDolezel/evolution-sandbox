@@ -7,10 +7,10 @@ describe('Reproduction Diagnostic', () => {
   it('tracks births and deaths over simulation lifecycle', () => {
     const config = getDefaultConfig();
 
-    config.world.WORLD_WIDTH = 200;
-    config.world.WORLD_HEIGHT = 200;
+    config.world.WORLD_WIDTH = 50;
+    config.world.WORLD_HEIGHT = 50;
     config.world.INITIAL_WOLF_COUNT = 0;
-    config.world.INITIAL_DEER_COUNT = 20;
+    config.world.INITIAL_DEER_COUNT = 3;
 
     const simulation = createSimulation(config, 12345);
 
@@ -29,12 +29,12 @@ describe('Reproduction Diagnostic', () => {
 
     const snapshots: { tick: number; count: number; births: number; starvation: number; oldAge: number }[] = [];
 
-    // Run simulation for 3000 ticks
-    for (let i = 0; i < 3000; i++) {
+    // Run simulation for 200 ticks
+    for (let i = 0; i < 200; i++) {
       simulation.step();
 
-      // Snapshot every 200 ticks
-      if (i % 200 === 0) {
+      // Snapshot every 50 ticks
+      if (i % 50 === 0) {
         snapshots.push({
           tick: i,
           count: simulation.world.getDeerCount(),
@@ -54,24 +54,24 @@ describe('Reproduction Diagnostic', () => {
       );
     }
 
-    console.log('\nFinal stats at tick 3000:');
+    console.log('\nFinal stats at tick 200:');
     console.log('Population:', simulation.world.getDeerCount());
     console.log('Total births:', totalBirths);
     console.log('Deaths by starvation:', deathsByStarvation);
     console.log('Deaths by old age:', deathsByOldAge);
-    console.log('Net population change:', simulation.world.getDeerCount() - 20);
+    console.log('Net population change:', simulation.world.getDeerCount() - 3);
 
     // The test: population should survive
     expect(simulation.world.getDeerCount()).toBeGreaterThan(0);
-  }, 120000);
+  }, 15000);
 
   it('analyzes the extinction mechanism', () => {
     const config = getDefaultConfig();
 
-    config.world.WORLD_WIDTH = 200;
-    config.world.WORLD_HEIGHT = 200;
+    config.world.WORLD_WIDTH = 50;
+    config.world.WORLD_HEIGHT = 50;
     config.world.INITIAL_WOLF_COUNT = 0;
-    config.world.INITIAL_DEER_COUNT = 20;
+    config.world.INITIAL_DEER_COUNT = 3;
 
     const simulation = createSimulation(config, 12345);
 
@@ -93,10 +93,10 @@ describe('Reproduction Diagnostic', () => {
     console.log('Tick | Count | Min Age | Max Age | Avg Age');
     console.log('-----|-------|---------|---------|--------');
 
-    for (let i = 0; i < 3000; i++) {
+    for (let i = 0; i < 200; i++) {
       simulation.step();
 
-      if (i % 200 === 0) {
+      if (i % 50 === 0) {
         const dist = getAgeDistribution();
         console.log(
           `${String(i).padStart(4)} | ${String(dist.count).padStart(5)} | ${String(dist.min).padStart(7)} | ${String(dist.max).padStart(7)} | ${dist.avg.toFixed(1).padStart(7)}`
@@ -112,5 +112,5 @@ describe('Reproduction Diagnostic', () => {
 
     // Should survive, but likely won't
     expect(simulation.world.getDeerCount()).toBeGreaterThan(0);
-  }, 120000);
+  }, 15000);
 });

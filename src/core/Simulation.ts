@@ -68,6 +68,9 @@ export function createSimulation(config: SimulationConfig, seed?: number): ISimu
       rng: world.rng,
       currentTick: world.currentTick,
       actionHistory: actionHistory ?? undefined,
+      deerIdGen: world.deerIdGen,
+      wolfIdGen: world.wolfIdGen,
+      corpseIdGen: world.corpseIdGen,
     });
 
     world.currentTick++;

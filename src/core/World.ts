@@ -19,6 +19,10 @@ export interface World {
   config: SimulationConfig;
   rng: RandomGenerator;
   currentTick: number;
+  // Persistent ID generators for offspring
+  deerIdGen: () => string;
+  wolfIdGen: () => string;
+  corpseIdGen: () => string;
 
   // Accessors
   getAnimal(id: EntityId): Animal | undefined;
@@ -49,6 +53,11 @@ export function createWorld(config: SimulationConfig, seed: number): World {
     config.world.WORLD_HEIGHT
   );
 
+  // Create persistent ID generators (shared across initial population and offspring)
+  const deerIdGen = createIdGenerator('deer');
+  const wolfIdGen = createIdGenerator('wolf');
+  const corpseIdGen = createIdGenerator('corpse');
+
   const world: World = {
     entityManager,
     vegetationGrid,
@@ -56,6 +65,9 @@ export function createWorld(config: SimulationConfig, seed: number): World {
     config,
     rng,
     currentTick: 0,
+    deerIdGen,
+    wolfIdGen,
+    corpseIdGen,
 
     getAnimal(id: EntityId): Animal | undefined {
       return entityManager.getAnimal(id);
@@ -146,13 +158,10 @@ function animalToSpatialEntity(animal: Animal): Animal & SpatialEntity {
 }
 
 export function initializePopulation(world: World): void {
-  const { config, rng, entityManager, vegetationGrid, animalSpatialIndex } = world;
+  const { config, rng, entityManager, vegetationGrid, animalSpatialIndex, deerIdGen, wolfIdGen } = world;
 
   // Initialize vegetation
   initializeVegetation(vegetationGrid, config.vegetation.INITIAL_VEGETATION_DENSITY, rng);
-
-  const deerIdGen = createIdGenerator('deer');
-  const wolfIdGen = createIdGenerator('wolf');
 
   const allAnimals: Animal[] = [];
 

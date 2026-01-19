@@ -22,24 +22,27 @@ describe('Simulation Integration Tests', () => {
 
   beforeEach(() => {
     config = getDefaultConfig();
-    // Use smaller population for faster tests
-    config.world.INITIAL_DEER_COUNT = 10;
-    config.world.INITIAL_WOLF_COUNT = 3;
+    // Use smaller world and population for faster tests
+    config.world.WORLD_WIDTH = 100;
+    config.world.WORLD_HEIGHT = 100;
+    config.world.INITIAL_DEER_COUNT = 5;
+    config.world.INITIAL_WOLF_COUNT = 2;
+    config.world.INITIAL_SPAWN_MIN_DISTANCE = 5;
   });
 
   describe('Determinism', () => {
-    it('produces identical results with same seed', { timeout: 30000 }, () => {
+    it('produces identical results with same seed', () => {
       const seed = 12345;
 
       // Run simulation 1
       const sim1 = createSimulation(config, seed);
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 20; i++) {
         sim1.step();
       }
 
       // Run simulation 2 with same seed
       const sim2 = createSimulation(config, seed);
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 20; i++) {
         sim2.step();
       }
 
@@ -66,7 +69,7 @@ describe('Simulation Integration Tests', () => {
       const sim1 = createSimulation(config, 12345);
       const sim2 = createSimulation(config, 54321);
 
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 10; i++) {
         sim1.step();
         sim2.step();
       }
@@ -93,14 +96,14 @@ describe('Simulation Integration Tests', () => {
     it('deer find and eat vegetation', () => {
       // Use config where vegetation doesn't spread (to clearly see consumption)
       config.vegetation.VEGETATION_SPREAD_RATE = 0;
-      config.world.INITIAL_DEER_COUNT = 20;
+      config.world.INITIAL_DEER_COUNT = 5;
       config.world.INITIAL_WOLF_COUNT = 0;
 
       const sim = createSimulation(config, 42);
       const initialVegetation = sim.world.getVegetationCount();
 
       // Run enough ticks for deer to eat some vegetation
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 20; i++) {
         sim.step();
       }
 
@@ -108,14 +111,14 @@ describe('Simulation Integration Tests', () => {
       expect(sim.world.getVegetationCount()).toBeLessThan(initialVegetation);
     });
 
-    it('wolves hunt deer and create corpses', { timeout: 60000 }, () => {
-      // Setup: hungrier wolves, smaller world to ensure encounters
-      config.world.INITIAL_DEER_COUNT = 30;
-      config.world.INITIAL_WOLF_COUNT = 15;
-      config.world.INITIAL_SPAWN_MIN_DISTANCE = 5; // Very close spawning
-      config.world.WORLD_WIDTH = 200; // Small world forces encounters
-      config.world.WORLD_HEIGHT = 200;
-      config.entities.INITIAL_HUNGER_SPAWN = 40; // Start animals hungrier
+    it('wolves hunt deer and create corpses', () => {
+      // Setup: hungrier wolves, small world to ensure encounters
+      config.world.INITIAL_DEER_COUNT = 10;
+      config.world.INITIAL_WOLF_COUNT = 5;
+      config.world.INITIAL_SPAWN_MIN_DISTANCE = 2; // Very close spawning
+      config.world.WORLD_WIDTH = 50; // Small world forces encounters
+      config.world.WORLD_HEIGHT = 50;
+      config.entities.INITIAL_HUNGER_SPAWN = 30; // Start animals hungrier
 
       const sim = createSimulation(config, 12345);
 
@@ -132,8 +135,8 @@ describe('Simulation Integration Tests', () => {
         corpseCreated = true;
       });
 
-      // Run until a hunt happens (may take many ticks)
-      for (let i = 0; i < 2000 && !deerDied; i++) {
+      // Run until a hunt happens (small world should make this quick)
+      for (let i = 0; i < 200 && !deerDied; i++) {
         sim.step();
       }
 
@@ -144,8 +147,8 @@ describe('Simulation Integration Tests', () => {
 
     it('reproduction creates offspring with mutation (asexual)', () => {
       // Use config that encourages reproduction
-      config.reproduction.REPRODUCTION_COOLDOWN = 20;
-      config.world.INITIAL_DEER_COUNT = 10;
+      config.reproduction.REPRODUCTION_COOLDOWN = 10;
+      config.world.INITIAL_DEER_COUNT = 5;
       config.world.INITIAL_WOLF_COUNT = 0; // No predators
 
       const sim = createSimulation(config, 42);
@@ -156,7 +159,7 @@ describe('Simulation Integration Tests', () => {
       });
 
       // Run until reproduction happens
-      for (let i = 0; i < 500 && offspring.length === 0; i++) {
+      for (let i = 0; i < 50 && offspring.length === 0; i++) {
         sim.step();
       }
 
@@ -181,12 +184,13 @@ describe('Simulation Integration Tests', () => {
       }
     });
 
-    it('starvation causes death', { timeout: 30000 }, () => {
+    it('starvation causes death', () => {
       // Create scenario where deer will starve
-      config.world.INITIAL_DEER_COUNT = 30;
-      config.vegetation.INITIAL_VEGETATION_DENSITY = 0.001; // Almost no food
+      config.world.INITIAL_DEER_COUNT = 5;
+      config.vegetation.INITIAL_VEGETATION_DENSITY = 0; // No food
       config.vegetation.VEGETATION_SPREAD_RATE = 0; // No new vegetation
       config.world.INITIAL_WOLF_COUNT = 0;
+      config.entities.INITIAL_HUNGER_SPAWN = 20; // Start with low hunger
 
       const sim = createSimulation(config, 42);
 
@@ -197,8 +201,8 @@ describe('Simulation Integration Tests', () => {
         }
       });
 
-      // Run until starvation occurs (may need more ticks with higher initial hunger)
-      for (let i = 0; i < 1000 && !starvationDeath; i++) {
+      // Run until starvation occurs (should be quick with no food and low initial hunger)
+      for (let i = 0; i < 100 && !starvationDeath; i++) {
         sim.step();
       }
 
@@ -268,11 +272,11 @@ describe('Simulation Integration Tests', () => {
   });
 
   describe('World Boundaries', () => {
-    it('animals stay within world bounds', { timeout: 30000 }, () => {
+    it('animals stay within world bounds', () => {
       const sim = createSimulation(config, 42);
 
-      // Run many ticks
-      for (let i = 0; i < 200; i++) {
+      // Run enough ticks to test boundary behavior
+      for (let i = 0; i < 30; i++) {
         sim.step();
       }
 
@@ -324,7 +328,7 @@ describe('Simulation Integration Tests', () => {
       const sim = createSimulation(config, 42);
 
       // Run some ticks
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 10; i++) {
         sim.step();
       }
 

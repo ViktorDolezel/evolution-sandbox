@@ -3,23 +3,23 @@ import type { SimulationConfig } from './types';
 export function getDefaultConfig(): SimulationConfig {
   return {
     world: {
-      WORLD_WIDTH: 1000,
-      WORLD_HEIGHT: 800,
+      WORLD_WIDTH: 500,
+      WORLD_HEIGHT: 500,
       VEGETATION_TILE_SIZE: 5,
       TICK_RATE: 10,
-      INITIAL_DEER_COUNT: 200,
-      INITIAL_WOLF_COUNT: 200,
+      INITIAL_DEER_COUNT: 10,
+      INITIAL_WOLF_COUNT: 5,
       INITIAL_SPAWN_MIN_DISTANCE: 50,
     },
     vegetation: {
       INITIAL_VEGETATION_DENSITY: 0.4,
       VEGETATION_SPREAD_RATE: 0.05,
-      VEGETATION_FOOD_VALUE: 20,
+      VEGETATION_FOOD_VALUE: 10,
     },
     entities: {
       MAX_HUNGER: 100,
       INITIAL_HUNGER_SPAWN: 80,
-      INITIAL_HUNGER_OFFSPRING: 70,
+      INITIAL_HUNGER_OFFSPRING: 20,
     },
     derivedStats: {
       SPEED_MULTIPLIER: 2.0,
@@ -54,7 +54,7 @@ export function getDefaultConfig(): SimulationConfig {
       MIN_ZOOM: 0.25,
       MAX_ZOOM: 4.0,
       SIDEBAR_WIDTH: 300,
-      MAX_ACTION_LOG_HISTORY: 100,
+      MAX_ACTION_LOG_HISTORY: 10,
       MIN_ACCEPTABLE_FPS: 30,
     },
   };

@@ -32,6 +32,10 @@ export interface TickContext {
   rng: RandomGenerator;
   currentTick: number;
   actionHistory?: ActionHistory;
+  // Persistent ID generators for offspring (to avoid ID collisions across ticks)
+  deerIdGen: () => string;
+  wolfIdGen: () => string;
+  corpseIdGen: () => string;
 }
 
 /**
@@ -105,16 +109,12 @@ export function executeExecutionPhase(
   context: TickContext,
   decisions: Map<string, Action>
 ): Omit<TickResult, 'tick' | 'decisions'> {
-  const { entityManager, vegetationGrid, animalSpatialIndex, config, rng, currentTick, actionHistory } = context;
+  const { entityManager, vegetationGrid, animalSpatialIndex, config, rng, currentTick, actionHistory, deerIdGen, wolfIdGen, corpseIdGen } = context;
 
   const deaths: string[] = [];
   const births: Animal[] = [];
   const corpsesCreated: Corpse[] = [];
   const corpsesRemoved: string[] = [];
-
-  const corpseIdGen = createIdGenerator('corpse');
-  const deerIdGen = createIdGenerator('deer');
-  const wolfIdGen = createIdGenerator('wolf');
 
   // Get animals sorted by alert range for execution order
   const animals = sortByAlertRange(entityManager.getLivingAnimals());

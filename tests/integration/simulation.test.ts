@@ -142,14 +142,13 @@ describe('Simulation Integration Tests', () => {
       expect(corpseCreated).toBe(true);
     });
 
-    it('reproduction creates offspring with mutation', () => {
+    it('reproduction creates offspring with mutation (asexual)', () => {
       // Use config that encourages reproduction
       config.reproduction.REPRODUCTION_COOLDOWN = 20;
       config.world.INITIAL_DEER_COUNT = 10;
       config.world.INITIAL_WOLF_COUNT = 0; // No predators
 
       const sim = createSimulation(config, 42);
-      const initialDeerCount = sim.world.getDeerCount();
 
       let offspring: import('../../src/entities/types').Animal[] = [];
       sim.on('animalBorn', ({ animal }) => {
@@ -163,21 +162,21 @@ describe('Simulation Integration Tests', () => {
 
       expect(offspring.length).toBeGreaterThan(0);
 
-      // Offspring should have parents
+      // Offspring should have a single parent (asexual reproduction)
       const firstOffspring = offspring[0];
-      expect(firstOffspring.parentIds[0]).not.toBeNull();
-      expect(firstOffspring.parentIds[1]).not.toBeNull();
+      expect(firstOffspring).toHaveProperty('parentId');
+      expect(firstOffspring.parentId).toBeDefined();
+      expect(firstOffspring.parentId).not.toBeNull();
+      expect(typeof firstOffspring.parentId).toBe('string');
       expect(firstOffspring.generation).toBeGreaterThan(0);
 
-      // Offspring attributes should be close to but not exactly parents
-      const parent1 = sim.world.getAnimal(firstOffspring.parentIds[0]!);
-      const parent2 = sim.world.getAnimal(firstOffspring.parentIds[1]!);
+      // Offspring attributes should be close to but not exactly parent (due to mutation)
+      const parent = sim.world.getAnimal(firstOffspring.parentId!);
 
-      if (parent1 && parent2) {
-        const avgStrength = (parent1.baseAttributes.strength + parent2.baseAttributes.strength) / 2;
-        // Offspring strength should be near average (within mutation range)
-        expect(Math.abs(firstOffspring.baseAttributes.strength - avgStrength)).toBeLessThan(
-          avgStrength * 0.3
+      if (parent) {
+        // Offspring strength should be near parent's value (within mutation range)
+        expect(Math.abs(firstOffspring.baseAttributes.strength - parent.baseAttributes.strength)).toBeLessThan(
+          parent.baseAttributes.strength * 0.3
         );
       }
     });

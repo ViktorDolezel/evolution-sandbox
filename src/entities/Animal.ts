@@ -12,7 +12,7 @@ export interface CreateAnimalOptions {
   baseAttributes?: Partial<BaseAttributes>;
   behavioralAttributes?: Partial<BehavioralAttributes>;
   lifecycleAttributes?: Partial<LifecycleAttributes>;
-  parentIds?: [EntityId | null, EntityId | null];
+  parentId?: EntityId | null;
   generation?: number;
   initialHunger?: number;
 }
@@ -81,7 +81,7 @@ export function createAnimal(
     lifecycleAttributes,
     derivedStats,
     state,
-    parentIds: options.parentIds ?? [null, null],
+    parentId: options.parentId ?? null,
     generation: options.generation ?? 0,
   };
 }

@@ -381,31 +381,23 @@ describe('DecisionEngine', () => {
       expect(attacked).toBe(true);
     });
 
-    it('returns REPRODUCE when conditions met and mate adjacent', () => {
-      const deer1 = createAnimal(
+    it('returns REPRODUCE when conditions met (asexual - no mate required)', () => {
+      const deer = createAnimal(
         { species: 'deer', position: { x: 100, y: 100 }, initialHunger: 80 },
         config,
         deerIdGen
       );
-      deer1.state.age = 100; // Mature
-      deer1.state.ticksSinceLastReproduction = 200; // Past cooldown
-
-      const deer2 = createAnimal(
-        { species: 'deer', position: { x: 101, y: 100 }, initialHunger: 80 }, // Adjacent
-        config,
-        deerIdGen
-      );
-      deer2.state.age = 100;
-      deer2.state.ticksSinceLastReproduction = 200;
+      deer.state.age = 100; // Mature
+      deer.state.ticksSinceLastReproduction = 200; // Past cooldown
 
       const grid = createVegetationGrid(1000, 800, 5);
 
-      // Find a seed where reproduction happens
+      // Find a seed where reproduction happens (asexual - no other animals needed)
       let reproduced = false;
       for (let i = 0; i < 100; i++) {
         const action = makeDecision({
-          animal: deer1,
-          nearbyAnimals: [deer2],
+          animal: deer,
+          nearbyAnimals: [], // No other animals needed for asexual reproduction
           corpses: [],
           vegetationGrid: grid,
           config,

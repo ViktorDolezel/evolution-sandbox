@@ -56,7 +56,7 @@ export interface Animal {
   lifecycleAttributes: LifecycleAttributes;
   derivedStats: DerivedStats;
   state: AnimalState;
-  parentIds: [EntityId | null, EntityId | null];
+  parentId: EntityId | null;
   generation: number;
 }
 
@@ -78,7 +78,6 @@ export type ActionType =
   | 'MOVE_TO_FOOD'
   | 'ATTACK'
   | 'REPRODUCE'
-  | 'MOVE_TO_MATE'
   | 'DRIFT'
   | 'STAY';
 

@@ -97,30 +97,30 @@ describe('Animal', () => {
       expect(animal.baseAttributes.endurance).toBe(10); // Species default
     });
 
-    it('sets parent IDs and generation', () => {
+    it('sets parent ID and generation (asexual reproduction)', () => {
       const animal = createAnimal(
         {
           species: 'deer',
           position: { x: 0, y: 0 },
-          parentIds: ['deer_1', 'deer_2'],
+          parentId: 'deer_1',
           generation: 3,
         },
         config,
         deerIdGen
       );
 
-      expect(animal.parentIds).toEqual(['deer_1', 'deer_2']);
+      expect(animal.parentId).toBe('deer_1');
       expect(animal.generation).toBe(3);
     });
 
-    it('sets null parent IDs for initial population', () => {
+    it('sets null parent ID for initial population', () => {
       const animal = createAnimal(
         { species: 'deer', position: { x: 0, y: 0 } },
         config,
         deerIdGen
       );
 
-      expect(animal.parentIds).toEqual([null, null]);
+      expect(animal.parentId).toBeNull();
       expect(animal.generation).toBe(0);
     });
 

@@ -59,9 +59,7 @@ export function formatActionDetails(action: ActionType, targetId?: EntityId, det
     case 'ATTACK':
       return targetId ? `Attacked ${targetId}` : 'Attacked';
     case 'REPRODUCE':
-      return targetId ? `Reproduced with ${targetId}` : 'Reproduced';
-    case 'MOVE_TO_MATE':
-      return targetId ? `Moving to ${targetId}` : 'Moving to mate';
+      return 'Reproduced';
     case 'DRIFT':
       return 'Drifting';
     case 'STAY':

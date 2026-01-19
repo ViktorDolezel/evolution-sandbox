@@ -163,8 +163,7 @@ export function createSidebar(
       <div class="sidebar-section">
         <h4>Lineage</h4>
         <div class="stat-row"><span>Generation:</span><span>${animal.generation}</span></div>
-        <div class="stat-row"><span>Parent 1:</span><span>${renderParentLink(animal.parentIds[0])}</span></div>
-        <div class="stat-row"><span>Parent 2:</span><span>${renderParentLink(animal.parentIds[1])}</span></div>
+        <div class="stat-row"><span>Parent:</span><span>${renderParentLink(animal.parentId)}</span></div>
       </div>
 
       <div class="sidebar-section">

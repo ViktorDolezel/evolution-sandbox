@@ -195,8 +195,7 @@ export function executeExecutionPhase(
         break;
       }
 
-      case 'MOVE_TO_FOOD':
-      case 'MOVE_TO_MATE': {
+      case 'MOVE_TO_FOOD': {
         if (action.targetPosition) {
           const direction = normalize(subtract(action.targetPosition, animal.state.position));
           const moveDistance = Math.min(
@@ -243,64 +242,50 @@ export function executeExecutionPhase(
       }
 
       case 'REPRODUCE': {
-        if (action.targetId) {
-          const mate = entityManager.getAnimal(action.targetId);
-          if (mate && !mate.state.isDead) {
-            // Create offspring
-            const offspringAttrs = createOffspringAttributes(animal, mate, rng, config);
-            const litterSize = animal.lifecycleAttributes.litterSize;
-            const idGen = animal.species === 'deer' ? deerIdGen : wolfIdGen;
+        // Asexual reproduction - no mate required
+        const offspringAttrs = createOffspringAttributes(animal, rng, config);
+        const litterSize = animal.lifecycleAttributes.litterSize;
+        const idGen = animal.species === 'deer' ? deerIdGen : wolfIdGen;
 
-            for (let i = 0; i < litterSize; i++) {
-              // Random offset from parent
-              const offsetX = (rng.next() - 0.5) * config.reproduction.OFFSPRING_SPAWN_OFFSET_MAX * 2;
-              const offsetY = (rng.next() - 0.5) * config.reproduction.OFFSPRING_SPAWN_OFFSET_MAX * 2;
-              const position = clampToWorld({
-                x: animal.state.position.x + offsetX,
-                y: animal.state.position.y + offsetY,
-              }, config);
+        for (let i = 0; i < litterSize; i++) {
+          // Random offset from parent
+          const offsetX = (rng.next() - 0.5) * config.reproduction.OFFSPRING_SPAWN_OFFSET_MAX * 2;
+          const offsetY = (rng.next() - 0.5) * config.reproduction.OFFSPRING_SPAWN_OFFSET_MAX * 2;
+          const position = clampToWorld({
+            x: animal.state.position.x + offsetX,
+            y: animal.state.position.y + offsetY,
+          }, config);
 
-              const offspring = createAnimal(
-                {
-                  species: animal.species,
-                  position,
-                  baseAttributes: offspringAttrs.baseAttributes,
-                  behavioralAttributes: offspringAttrs.behavioralAttributes,
-                  lifecycleAttributes: offspringAttrs.lifecycleAttributes,
-                  parentIds: [animal.id, mate.id],
-                  generation: Math.max(animal.generation, mate.generation) + 1,
-                  initialHunger: config.entities.INITIAL_HUNGER_OFFSPRING,
-                },
-                config,
-                idGen
-              );
+          const offspring = createAnimal(
+            {
+              species: animal.species,
+              position,
+              baseAttributes: offspringAttrs.baseAttributes,
+              behavioralAttributes: offspringAttrs.behavioralAttributes,
+              lifecycleAttributes: offspringAttrs.lifecycleAttributes,
+              parentId: animal.id,
+              generation: animal.generation + 1,
+              initialHunger: config.entities.INITIAL_HUNGER_OFFSPRING,
+            },
+            config,
+            idGen
+          );
 
-              entityManager.addAnimal(offspring);
-              animalSpatialIndex.insert(animalToSpatialEntity(offspring));
-              births.push(offspring);
-            }
-
-            // Apply reproduction cost to both parents (cost scales with litter size)
-            const hungerCost = config.reproduction.REPRODUCTION_COST * litterSize * config.entities.MAX_HUNGER;
-            const parent1Hunger = Math.max(0, animal.state.hunger - hungerCost);
-            const parent2Hunger = Math.max(0, mate.state.hunger - hungerCost);
-
-            let updatedParent1 = updateAnimalState(animal, {
-              hunger: parent1Hunger,
-              ticksSinceLastReproduction: 0,
-            });
-            let updatedParent2 = updateAnimalState(mate, {
-              hunger: parent2Hunger,
-              ticksSinceLastReproduction: 0,
-            });
-
-            updatedParent1 = applyHungerDecay(updatedParent1);
-            updatedParent2 = applyHungerDecay(updatedParent2);
-
-            entityManager.updateAnimal(animal.id, updatedParent1);
-            entityManager.updateAnimal(mate.id, updatedParent2);
-          }
+          entityManager.addAnimal(offspring);
+          animalSpatialIndex.insert(animalToSpatialEntity(offspring));
+          births.push(offspring);
         }
+
+        // Apply reproduction cost to parent (cost scales with litter size)
+        const hungerCost = config.reproduction.REPRODUCTION_COST * litterSize * config.entities.MAX_HUNGER;
+        const newHunger = Math.max(0, animal.state.hunger - hungerCost);
+
+        let updatedParent = updateAnimalState(animal, {
+          hunger: newHunger,
+          ticksSinceLastReproduction: 0,
+        });
+        updatedParent = applyHungerDecay(updatedParent);
+        entityManager.updateAnimal(animal.id, updatedParent);
         break;
       }
 

@@ -2,11 +2,10 @@ import type { Animal, Corpse } from '../entities/types';
 import type { SimulationConfig } from '../config/types';
 import type { VegetationGrid } from '../spatial/VegetationGrid';
 import type { RandomGenerator } from '../core/SeededRandom';
-import type { Action, ThreatInfo, FoodTarget, MateTarget } from './types';
+import type { Action, ThreatInfo, FoodTarget } from './types';
 import { findThreats, calculateFleeVector } from './ThreatCalculator';
 import { selectFoodTarget, isAtFoodPosition, findNearestPrey } from './FoodFinder';
-import { findEligibleMates, selectBestMate, isInMatingRange } from './MateFinder';
-import { distance, normalize } from '../utils/vector';
+import { distance } from '../utils/vector';
 import { isReproductionReady } from '../entities/Animal';
 
 export interface DecisionContext {
@@ -100,7 +99,8 @@ export function canKill(attacker: Animal, defender: Animal): boolean {
 
 /**
  * Main decision-making function.
- * Priority order: DIE > FLEE > EAT > MOVE_TO_FOOD > ATTACK > REPRODUCE > MOVE_TO_MATE > DRIFT/STAY
+ * Priority order: DIE > FLEE > EAT > MOVE_TO_FOOD > ATTACK > REPRODUCE > DRIFT/STAY
+ * Note: V1 uses asexual reproduction - no mate required
  */
 export function makeDecision(context: DecisionContext): Action {
   const { animal, nearbyAnimals, corpses, vegetationGrid, config, rng } = context;
@@ -203,31 +203,13 @@ export function makeDecision(context: DecisionContext): Action {
     }
   }
 
-  // 5. Check for reproduction
+  // 5. Check for reproduction (asexual - no mate required)
   if (isReproductionReady(animal, config)) {
-    const mates = findEligibleMates(animal, nearbyAnimals, config);
-    const bestMate = selectBestMate(mates);
-
-    if (bestMate) {
-      const mateAnimal = nearbyAnimals.find((a) => a.id === bestMate.id);
-
-      if (mateAnimal && isInMatingRange(animal, mateAnimal)) {
-        // Reproduction chance based on reproductive urge
-        if (rng.next() < animal.behavioralAttributes.reproductiveUrge) {
-          return {
-            type: 'REPRODUCE',
-            targetId: mateAnimal.id,
-            targetPosition: mateAnimal.state.position,
-          };
-        }
-      } else if (mateAnimal) {
-        // Move toward mate
-        return {
-          type: 'MOVE_TO_MATE',
-          targetId: mateAnimal.id,
-          targetPosition: bestMate.position,
-        };
-      }
+    // Reproduction chance based on reproductive urge
+    if (rng.next() < animal.behavioralAttributes.reproductiveUrge) {
+      return {
+        type: 'REPRODUCE',
+      };
     }
   }
 

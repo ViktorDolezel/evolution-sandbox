@@ -44,7 +44,7 @@ The simulation operates on a tick-based loop where animals:
 **Derived Stats** (calculated from base attributes):
 - Speed, alert range, attack power, defense, hunger decay rate
 
-All attributes inherit from parents as the mean value plus mutation (normal distribution). Offspring in a litter share identical properties (simplified genetics model).
+All attributes inherit from the parent with mutation applied (normal distribution). Offspring in a litter share identical properties (simplified genetics model).
 
 ### 1.5 Evolution Emerges Through Selection Pressure
 
@@ -54,9 +54,9 @@ All attributes inherit from parents as the mean value plus mutation (normal dist
 - Starvation selects for food-seeking behavior (lower food priority threshold)
 
 **Reproductive Pressure:**
-- Mate selection prioritizes fitness (strength + agility + endurance)
-- Only reproduction-ready animals attract mates (mature, well-fed, not in cooldown)
+- Only reproduction-ready animals can reproduce (mature, well-fed, not in cooldown)
 - Litter size affects reproduction cost — larger litters require more hunger buffer
+- reproductiveUrge trait affects likelihood of reproducing when conditions are met
 
 **Behavioral Trade-offs:**
 - High aggression enables hunting but risks injury from failed attacks (wasted energy)
@@ -81,7 +81,7 @@ The "Generate Random Seed" button provides a new random seed for variety.
 
 **Selection System:**
 - Double-click animal to view detailed sidebar
-- Sidebar shows: attributes, derived stats, lineage (clickable parents), action log
+- Sidebar shows: attributes, derived stats, lineage (clickable parent), action log
 - Parent navigation: click living parent ID to pan camera and update selection
 
 **Global Controls:**
@@ -116,7 +116,7 @@ This PRD is organized into 10 sections:
 | Section | Content |
 |---------|---------|
 | **2. Entities** | Vegetation, animals, corpses, species definitions |
-| **3. Evolution & Genetics** | Attributes, inheritance, mutation, mate selection |
+| **3. Evolution & Genetics** | Attributes, inheritance, mutation, reproduction readiness |
 | **4. Behavior System** | Decision algorithm, actions, combat, energy costs |
 | **5. World & Simulation** | Canvas model, tick loop, vegetation mechanics, seeded RNG |
 | **6. Predation & Death** | Death triggers, kill mechanics, corpse system |
@@ -208,7 +208,7 @@ Species are predefined blueprints. No emergent speciation in V1.
 | Deer | true | false | false |
 | Wolf | false | true | true |
 
-Animals can only reproduce with same species.
+V1 uses asexual reproduction — animals reproduce independently without requiring a mate.
 
 ### 2.5 Corpse
 
@@ -245,7 +245,7 @@ Evolvable traits that affect decision-making:
 | `aggression` | 0.0 | 1.0 | Propensity to attack (even when not very hungry) |
 | `flightInstinct` | 0.0 | 1.0 | Propensity to flee from threats |
 | `foodPriorityThreshold` | 0.1 | 0.9 | Hunger level below which food becomes priority (lower = seek food sooner) |
-| `reproductiveUrge` | 0.1 | 0.9 | Priority for mate-seeking |
+| `reproductiveUrge` | 0.1 | 0.9 | Priority for reproduction when conditions are met |
 | `carrionPreference` | 0.0 | 1.0 | Prefer corpses over hunting (carnivores only) |
 
 ### 3.3 Lifecycle Attributes
@@ -330,13 +330,13 @@ Default starting values per species. All values evolvable within bounds.
 
 ### 3.7 Inheritance Formula
 
-When two animals reproduce, offspring properties are calculated:
+When an animal reproduces, offspring properties are calculated:
 
 ```
-offspringProperty = mean(parent1Property, parent2Property) × (1 + mutation)
+offspringProperty = parentProperty × (1 + mutation)
 ```
 
-Where `mutation` is drawn from a normal distribution centered at 0 with standard deviation equal to the mutation rate.
+Where `mutation` is drawn from a normal distribution centered at 0 with standard deviation equal to the mutation rate. Offspring inherit directly from their single parent with mutation applied.
 
 ### 3.8 Mutation Rates
 
@@ -352,27 +352,19 @@ Where `mutation` is drawn from a normal distribution centered at 0 with standard
 
 Rationale: Siblings are genetically identical (simplified model). Variation comes from different reproduction events, not within litters.
 
-### 3.10 Mate Selection
+### 3.10 Reproduction Readiness
 
-When multiple eligible mates are in range, selection prioritizes fitness:
+An animal is reproduction-ready when all visible conditions are met:
 
-1. **Filter:** Only consider mates that are reproduction-ready (see below)
-2. **Primary factor:** Prefer higher combined fitness (`strength + agility + endurance`)
-3. **Tiebreaker:** If fitness equal, prefer nearest
-
-**Reproduction Readiness (publicly visible):**
-
-Animals can assess potential mates' readiness before approaching:
-
-| Indicator | Visible? | Effect on Selection |
-|-----------|----------|---------------------|
-| Maturity (`age ≥ maturityAge`) | Yes | Immature animals excluded |
-| Hunger level | Yes | Animals with `hunger < reproductionThreshold` excluded |
-| Cooldown status | Yes | Animals in cooldown excluded |
+| Condition | Requirement |
+|-----------|-------------|
+| Maturity | `age ≥ maturityAge` |
+| Hunger level | `hunger > reproductionThreshold` |
+| Cooldown status | `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN` |
 
 Where `reproductionThreshold = (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER`
 
-**Rationale:** Animals can visually assess health (hunger) and avoid wasting energy pursuing unsuitable mates. This creates selection pressure toward high fitness and good timing.
+**Rationale:** V1 uses asexual reproduction to simplify mechanics. Each animal represents a population unit that can reproduce independently when conditions are favorable. Sexual reproduction with mate selection is deferred to V2.
 
 ### 3.11 Edge Cases
 
@@ -393,8 +385,7 @@ Each tick, an animal executes exactly one action:
 | `EAT` | Consume food at current position |
 | `MOVE_TO_FOOD` | Move toward nearest valid food source |
 | `ATTACK` | Attempt to kill target animal |
-| `REPRODUCE` | Spawn offspring with nearby mate |
-| `MOVE_TO_MATE` | Move toward nearest eligible mate |
+| `REPRODUCE` | Spawn offspring near current position |
 | `DRIFT` | Move toward food at half speed (lazy grazing/stalking) |
 | `STAY` | No movement |
 
@@ -434,9 +425,8 @@ All animals use the same decision logic. Behavior differences emerge from attrib
 6. REPRODUCTION CHECK:
    - reproductionCost = REPRODUCTION_COST × litterSize
    - If mature AND hunger > (reproductionCost + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER
-     AND reproduction-ready mate in alertRange AND random() < reproductiveUrge:
-     - If mate adjacent → REPRODUCE
-     - Else → MOVE_TO_MATE
+     AND not in cooldown AND random() < reproductiveUrge:
+     → REPRODUCE
 
 7. IDLE:
    - If food in alertRange → DRIFT
@@ -481,8 +471,7 @@ attackChance = aggression × (1 - hunger/MAX_HUNGER)
 | `EAT` | Consume stationary food at current position: vegetation (if `canEatVegetation`) or corpse (if `canEatCorpses`). For vegetation, map animal position to grid tile: `gridX = floor(x / VEGETATION_TILE_SIZE)`, `gridY = floor(y / VEGETATION_TILE_SIZE)`. Gain hunger based on food value. Live animals are consumed via ATTACK, not EAT. |
 | `MOVE_TO_FOOD` | Move toward nearest valid food at full `speed` |
 | `ATTACK` | If `attackPower > target.defense`, kill target. If target no longer exists (died earlier in execution), action fails gracefully. Otherwise target escapes. |
-| `REPRODUCE` | Spawn `litterSize` offspring at midpoint between parents |
-| `MOVE_TO_MATE` | Move toward nearest eligible mate at full `speed` |
+| `REPRODUCE` | Spawn `litterSize` offspring near parent's position |
 | `DRIFT` | Move toward nearest food at `speed × 0.5` |
 | `STAY` | No position change |
 
@@ -524,22 +513,20 @@ Animals can freely overlap — no collision detection for positioning or movemen
 | Interaction | Distance calculation |
 |-------------|---------------------|
 | Contact range (attack) | `animal1.size + animal2.size` |
-| Adjacent for mating | `(animal1.size + animal2.size) × 1.5` |
 | Corpse eating range | `animal.size + corpse.sourceSize` |
 
 ### 4.8 Reproduction Conditions
 
 An animal can reproduce when all conditions are met:
 
-| Condition | Requirement | Visible to Others? |
-|-----------|-------------|-------------------|
-| Maturity | `age ≥ maturityAge` | Yes |
-| Hunger buffer | `hunger > (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER` | Yes |
-| Cooldown | `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN` | Yes |
-| Mate available | Same-species reproduction-ready animal within mating range | — |
-| Behavioral check | `random() < reproductiveUrge` | No (internal) |
+| Condition | Requirement |
+|-----------|-------------|
+| Maturity | `age ≥ maturityAge` |
+| Hunger buffer | `hunger > (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER` |
+| Cooldown | `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN` |
+| Behavioral check | `random() < reproductiveUrge` |
 
-**Visibility:** Animals can assess maturity, hunger, and cooldown status of potential mates before pursuing. This prevents wasted movement toward unsuitable mates. See **Section 3.10** for selection logic.
+**Note:** V1 uses asexual reproduction — no mate required. See **Section 3.10** for reproduction readiness details.
 
 **Config:**
 
@@ -560,7 +547,7 @@ Example: `litterSize = 2`, cost = 0.15, buffer = 0.2
 | Base decay | `hungerDecayRate` applied every tick (see Section 3.4) |
 | Full-speed movement | Additional `MOVE_COST × distance` hunger drain |
 | Drift movement | Additional `MOVE_COST × 0.5 × distance` hunger drain |
-| Reproduction | `REPRODUCTION_COST × litterSize × MAX_HUNGER` from each parent |
+| Reproduction | `REPRODUCTION_COST × litterSize × MAX_HUNGER` from parent |
 | Flee sprint tax | Additional `FLEE_COST_BONUS × distance` hunger drain |
 
 **Config:**
@@ -580,10 +567,7 @@ Example: `litterSize = 2`, cost = 0.15, buffer = 0.2
 
 - **Multiple threats:** Flee using weighted repulsion from all
 - **Food at current position:** Eat before considering movement
-- **Reproduction ready but mate not adjacent:** Execute MOVE_TO_MATE instead
-- **Multiple potential mates:** Use selection rules (Section 3.10)
 - **World bounds:** Animals clamped to canvas edge
-- **Both animals try to reproduce with each other:** Only one event occurs (first to act in execution order initiates)
 
 ## 5. World & Simulation
 
@@ -827,30 +811,24 @@ An animal can reproduce when all conditions are met:
 | Maturity | `age ≥ maturityAge` |
 | Hunger buffer | `hunger > (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER` |
 | Cooldown | `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN` |
-| Mate available | Same-species reproduction-ready animal within mating range |
 | Behavioral check | `random() < reproductiveUrge` |
 
-See **Section 4.2** for how reproduction fits into decision logic and **Section 4.8** for detailed conditions.
+V1 uses asexual reproduction — no mate is required. See **Section 4.2** for how reproduction fits into decision logic.
 
-### 7.2 Mate Selection
+### 7.2 Asexual Reproduction (V1)
 
-When multiple eligible mates are in range:
+In V1, animals reproduce asexually when conditions in Section 7.1 are met. This simplifies the simulation while still demonstrating evolutionary principles through inheritance and mutation.
 
-1. **Filter:** Only reproduction-ready mates (mature, sufficient hunger, not in cooldown)
-2. **Primary factor:** Prefer higher combined fitness (`strength + agility + endurance`)
-3. **Tiebreaker:** If fitness equal, prefer nearest
-
-See **Section 3.10** for details on reproduction readiness visibility.
+**Future consideration (V2):** Sexual reproduction with mate selection, where offspring inherit mean of both parents' traits. See Section 10 for planned enhancements.
 
 ### 7.3 Offspring Placement
 
-Offspring spawn at the midpoint between parents:
+Offspring spawn near the parent's position:
 
 ```
-midpoint = (parent1.position + parent2.position) / 2
 for each offspring (up to litterSize):
     offset = randomVector() × randomRange(0, OFFSPRING_SPAWN_OFFSET_MAX)
-    position = midpoint + offset
+    position = parent.position + offset
 ```
 
 - Animals can overlap — no collision detection
@@ -865,37 +843,35 @@ for each offspring (up to litterSize):
 | Age | 0 (must reach `maturityAge` to reproduce) |
 | Hunger | 70 (see Section 4.6) |
 | Cooldown | 0 (can reproduce once mature) |
-| Position | Midpoint between parents + small offset |
-| Inherited traits | See Section 3.7 (mean of parents + mutation) |
+| Position | Near parent + small offset |
+| Inherited traits | See Section 3.7 (parent traits + mutation) |
 
 **Litter inheritance:** All siblings share identical properties. Calculated once per reproduction event. See **Section 3.9**.
 
 ### 7.5 Reproduction Cost
 
-Both parents pay a hunger penalty:
+The reproducing animal pays a hunger penalty:
 
 ```
 hungerCost = REPRODUCTION_COST × litterSize × MAX_HUNGER
-parent1.hunger -= hungerCost
-parent2.hunger -= hungerCost
+parent.hunger -= hungerCost
 ```
 
 | Config Key | Default | Notes |
 |------------|---------|-------|
 | `REPRODUCTION_COST` | 0.15 | Base cost per offspring (fraction of MAX_HUNGER) |
 
-Example: `litterSize = 2` → each parent loses `0.15 × 2 × 100 = 30` hunger.
+Example: `litterSize = 2` → parent loses `0.15 × 2 × 100 = 30` hunger.
 
 ### 7.6 Reproduction Cooldown
 
-After reproducing, both parents enter cooldown:
+After reproducing, the parent enters cooldown:
 
 ```
-parent1.ticksSinceLastReproduction = 0
-parent2.ticksSinceLastReproduction = 0
+parent.ticksSinceLastReproduction = 0
 ```
 
-Neither can reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN`.
+The animal cannot reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_COOLDOWN`.
 
 | Config Key | Default | Notes |
 |------------|---------|-------|
@@ -903,9 +879,8 @@ Neither can reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_C
 
 ### 7.7 Edge Cases
 
-- **Insufficient hunger for reproduction:** Reproduction is blocked if `hunger ≤ (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER`. The safety buffer ensures parents can't starve from reproduction cost.
-- **Parents die during reproduction tick:** If both parents selected REPRODUCE action in the decision phase, offspring still spawn even if one or both parents die during the execution phase (e.g., from starvation or predation). Reproduction is "committed" once selected during decision phase. Offspring inherit properties from parents' last living state (properties calculated before death).
-- **Both animals try to reproduce with each other:** Only one reproduction event occurs (first to act in execution order — highest alertRange — initiates)
+- **Insufficient hunger for reproduction:** Reproduction is blocked if `hunger ≤ (REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER`. The safety buffer ensures the parent can't starve from reproduction cost.
+- **Parent dies during reproduction tick:** If an animal selected REPRODUCE action in the decision phase, offspring still spawn even if the parent dies during the execution phase (e.g., from starvation or predation). Reproduction is "committed" once selected during decision phase. Offspring inherit properties from the parent's last living state (properties calculated before death).
 
 ## 8. User Interface
 
@@ -991,7 +966,7 @@ Neither can reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_C
    - Cooldown: `{ticksSinceLastReproduction} / {REPRODUCTION_COOLDOWN}` (if applicable)
 
 3. **Base Attributes:**
-   - Table: attribute name, current value, (parents' average in parentheses if available)
+   - Table: attribute name, current value, (parent's value in parentheses if available)
    - strength, agility, endurance, perception, size
 
 4. **Behavioral Attributes:**
@@ -1004,8 +979,7 @@ Neither can reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_C
    - maxAge, maturityAge, litterSize
 
 7. **Lineage:**
-   - Parent 1: `{species}_{id}` (clickable if alive, grayed if deceased/unknown)
-   - Parent 2: `{species}_{id}` (clickable if alive, grayed if deceased/unknown)
+   - Parent: `{species}_{id}` (clickable if alive, grayed if deceased/unknown)
    - For initial population animals (spawned at simulation start): Display "None (initial population)"
    - Offspring count: Total offspring produced by this animal
 
@@ -1041,8 +1015,7 @@ Neither can reproduce again until `ticksSinceLastReproduction ≥ REPRODUCTION_C
 | EAT | `Tick X: EAT {food_type} → +{amount} hunger` |
 | MOVE_TO_FOOD | `Tick X: MOVE_TO_FOOD {food_type} at ({x}, {y})` |
 | ATTACK | `Tick X: ATTACK {target_id} → {Success / Failed}` |
-| REPRODUCE | `Tick X: REPRODUCE with {mate_id} → {litterSize} offspring` |
-| MOVE_TO_MATE | `Tick X: MOVE_TO_MATE {mate_id}` |
+| REPRODUCE | `Tick X: REPRODUCE → {litterSize} offspring` |
 | DRIFT | `Tick X: DRIFT toward {food_type}` |
 | STAY | `Tick X: STAY` |
 
@@ -1255,7 +1228,7 @@ interface SimulationConfig {
 
 **Notes:**
 - All hunger thresholds and costs are fractions of `MAX_HUNGER`
-- Offspring start slightly hungrier to encourage parents to feed before reproducing
+- Offspring start slightly hungrier to encourage the parent to feed before reproducing
 - Changing `MAX_HUNGER` requires rebalancing food values and costs
 
 ### 9.5 Derived Stats Multipliers
@@ -1290,11 +1263,11 @@ interface SimulationConfig {
 | `REPRODUCTION_COST` | 0.15 | 0.05–0.5 | Hunger cost per offspring (fraction of MAX_HUNGER) |
 | `REPRODUCTION_SAFETY_BUFFER` | 0.2 | 0.1–0.5 | Extra hunger required beyond reproduction cost |
 | `REPRODUCTION_COOLDOWN` | 100 | 20–500 | Ticks before animal can reproduce again |
-| `OFFSPRING_SPAWN_OFFSET_MAX` | 2.0 | 0.5–10.0 | Max random offset from midpoint when spawning offspring (world units) |
+| `OFFSPRING_SPAWN_OFFSET_MAX` | 2.0 | 0.5–10.0 | Max random offset from parent when spawning offspring (world units) |
 
 **Notes:**
 - Reproduction threshold = `(REPRODUCTION_COST × litterSize + REPRODUCTION_SAFETY_BUFFER) × MAX_HUNGER`
-- Safety buffer prevents starvation from reproduction — parents must have buffer + cost
+- Safety buffer prevents starvation from reproduction — parent must have buffer + cost
 - Longer cooldown = slower population growth
 - Spawn offset prevents visual stacking, doesn't affect gameplay
 
@@ -1557,12 +1530,21 @@ This section catalogs potential enhancements beyond V1 scope. Items are organize
 - **Rationale:** Behavioral evolution beyond genetics
 - **Complexity:** Very High — learning system, memory management
 
+**Sexual Reproduction (Two-Parent Mating):**
+- Require two animals to reproduce (vs V1 asexual)
+- Offspring inherit mean of both parents' traits + mutation
+- Mate selection based on fitness (strength + agility + endurance)
+- MOVE_TO_MATE action to pursue eligible mates
+- Creates selection pressure for fitness-signaling traits
+- **Rationale:** More realistic genetics, enables sexual selection mechanics
+- **Complexity:** Medium — mate finding, selection logic, dual inheritance
+
 **Sexual Selection:**
 - Mate choice based on visual traits (color, size, patterns)
 - Arbitrary preferences can evolve (peacock tail effect)
 - Traits that reduce survival but attract mates
 - **Rationale:** Demonstrates sexual selection vs natural selection
-- **Complexity:** Medium — mate selection already exists, add trait preferences
+- **Complexity:** Medium — requires sexual reproduction first, add trait preferences
 
 ### 10.5 Social Behaviors
 

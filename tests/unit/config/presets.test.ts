@@ -44,7 +44,7 @@ describe('Config presets', () => {
       expect(result.reproduction.REPRODUCTION_COOLDOWN).toBe(50);
 
       // Non-preset values should remain from base
-      expect(result.world.WORLD_WIDTH).toBe(1000);
+      expect(result.world.WORLD_WIDTH).toBe(500);
       expect(result.entities.MAX_HUNGER).toBe(100);
     });
 

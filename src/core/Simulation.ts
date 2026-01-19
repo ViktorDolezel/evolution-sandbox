@@ -1,6 +1,7 @@
 import type { SimulationConfig } from '../config/types';
 import type { World } from './World';
 import type { Animal, Corpse } from '../entities/types';
+import type { ActionHistory } from '../data/ActionHistory';
 import { createWorld, initializePopulation } from './World';
 import { runTick } from './TickLoop';
 import { createEventEmitter } from '../utils/events';
@@ -32,6 +33,7 @@ export interface ISimulation {
   reset(newSeed?: number): void;
   setSpeed(multiplier: number): void;
   step(): void;
+  setActionHistory(history: ActionHistory | null): void;
 
   // Events
   on<K extends keyof SimulationEvents>(
@@ -53,6 +55,7 @@ export function createSimulation(config: SimulationConfig, seed?: number): ISimu
   let speed = 1;
   let animationFrameId: number | null = null;
   let lastTickTime = 0;
+  let actionHistory: ActionHistory | null = null;
 
   const emitter = createEventEmitter<SimulationEvents>();
 
@@ -64,6 +67,7 @@ export function createSimulation(config: SimulationConfig, seed?: number): ISimu
       config: world.config,
       rng: world.rng,
       currentTick: world.currentTick,
+      actionHistory: actionHistory ?? undefined,
     });
 
     world.currentTick++;
@@ -173,6 +177,10 @@ export function createSimulation(config: SimulationConfig, seed?: number): ISimu
       tick();
     },
 
+    setActionHistory(history: ActionHistory | null): void {
+      actionHistory = history;
+    },
+
     on<K extends keyof SimulationEvents>(
       event: K,
       callback: (data: SimulationEvents[K]) => void
@@ -212,6 +220,7 @@ export class SimulationClass implements ISimulation {
   reset(newSeed?: number): void { this._sim.reset(newSeed); }
   setSpeed(multiplier: number): void { this._sim.setSpeed(multiplier); }
   step(): void { this._sim.step(); }
+  setActionHistory(history: ActionHistory | null): void { this._sim.setActionHistory(history); }
 
   on<K extends keyof SimulationEvents>(
     event: K,

@@ -9,9 +9,16 @@ export interface InputHandlerConfig {
   hitTestTolerance: number;
 }
 
+export interface InputHandlerCallbacks {
+  onToggleInfoPanel?: () => void;
+  onToggleGraph?: () => void;
+  onShowHelp?: () => void;
+}
+
 export interface InputHandler {
   enable(): void;
   disable(): void;
+  setCallbacks(callbacks: InputHandlerCallbacks): void;
   destroy(): void;
 }
 
@@ -32,6 +39,7 @@ export function createInputHandler(
   let lastMousePos = { x: 0, y: 0 };
   let lastClickTime = 0;
   let lastClickPos = { x: 0, y: 0 };
+  let callbacks: InputHandlerCallbacks = {};
 
   // Mouse handlers
   function handleMouseDown(e: MouseEvent): void {
@@ -184,6 +192,29 @@ export function createInputHandler(
         e.preventDefault();
         simulation.setSpeed(Math.min(10, simulation.speed + 0.5));
         break;
+
+      case 'i':
+      case 'I':
+        e.preventDefault();
+        if (callbacks.onToggleInfoPanel) {
+          callbacks.onToggleInfoPanel();
+        }
+        break;
+
+      case 'g':
+      case 'G':
+        e.preventDefault();
+        if (callbacks.onToggleGraph) {
+          callbacks.onToggleGraph();
+        }
+        break;
+
+      case '?':
+        e.preventDefault();
+        if (callbacks.onShowHelp) {
+          callbacks.onShowHelp();
+        }
+        break;
     }
   }
 
@@ -254,6 +285,10 @@ export function createInputHandler(
     disable(): void {
       enabled = false;
       isPanning = false;
+    },
+
+    setCallbacks(newCallbacks: InputHandlerCallbacks): void {
+      callbacks = { ...callbacks, ...newCallbacks };
     },
 
     destroy(): void {

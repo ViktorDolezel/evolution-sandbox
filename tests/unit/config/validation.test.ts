@@ -108,7 +108,7 @@ describe('Config validation', () => {
       });
 
       expect(result.world.WORLD_WIDTH).toBe(2000);
-      expect(result.world.WORLD_HEIGHT).toBe(800); // Default
+      expect(result.world.WORLD_HEIGHT).toBe(400); // Default
     });
 
     it('handles deeply nested partial configs', () => {

@@ -7,7 +7,9 @@ import { createInfoPanel, type InfoPanel } from './InfoPanel';
 import { createControlPanel, type ControlPanel } from './ControlPanel';
 import { createSidebar, type Sidebar } from './Sidebar';
 import { createPopulationGraph, type PopulationGraph } from './PopulationGraph';
+import { createHelpDialog, type HelpDialog } from './HelpDialog';
 import { createPopulationHistory, type PopulationHistory } from '../data/PopulationHistory';
+import { createActionHistory, type ActionHistory } from '../data/ActionHistory';
 
 export class UIManager {
   private simulation: Simulation;
@@ -22,6 +24,8 @@ export class UIManager {
   private sidebar: Sidebar;
   private populationGraph: PopulationGraph;
   private populationHistory: PopulationHistory;
+  private actionHistory: ActionHistory;
+  private helpDialog: HelpDialog;
 
   private animationFrameId: number | null = null;
   private isInitialized = false;
@@ -56,6 +60,10 @@ export class UIManager {
     // Create population history
     this.populationHistory = createPopulationHistory(1000);
 
+    // Create action history
+    this.actionHistory = createActionHistory(config.ui.MAX_ACTION_LOG_HISTORY);
+    this.simulation.setActionHistory(this.actionHistory);
+
     // Get UI containers
     const controlPanelContainer = document.getElementById('control-panel');
     const sidebarContainer = document.getElementById('sidebar');
@@ -72,8 +80,48 @@ export class UIManager {
     this.sidebar = createSidebar(sidebarContainer, this.selectionManager, config);
     this.populationGraph = createPopulationGraph(graphPanelContainer, this.populationHistory);
 
+    // Configure sidebar with action history and parent click handler
+    this.sidebar.setActionHistory(this.actionHistory);
+    this.sidebar.setCallbacks({
+      onParentClick: (parentId) => {
+        const animal = this.simulation.world.entityManager.getAnimal(parentId);
+        if (animal && !animal.state.isDead) {
+          this.selectionManager.select(animal);
+          this.camera.panToPosition(animal.state.position);
+        }
+      },
+    });
+
     // Create input handler
     this.inputHandler = createInputHandler(this.canvas, this.camera, this.selectionManager, simulation);
+
+    // Create help dialog
+    this.helpDialog = createHelpDialog();
+
+    // Set up keyboard shortcut callbacks
+    this.inputHandler.setCallbacks({
+      onToggleInfoPanel: () => {
+        if (this.infoPanel.isVisible()) {
+          this.infoPanel.hide();
+        } else {
+          this.infoPanel.show();
+        }
+      },
+      onToggleGraph: () => {
+        if (this.populationGraph.isVisible()) {
+          this.populationGraph.hide();
+        } else {
+          this.populationGraph.show();
+        }
+      },
+      onShowHelp: () => {
+        if (this.helpDialog.isVisible()) {
+          this.helpDialog.hide();
+        } else {
+          this.helpDialog.show();
+        }
+      },
+    });
 
     // Wire up selection events
     this.selectionManager.on('selectionChanged', ({ current }) => {
@@ -121,6 +169,11 @@ export class UIManager {
     // Record population data
     this.populationHistory.record(data.tick, data.deerCount, data.wolfCount, data.vegetationCount);
 
+    // Update living animal IDs for parent link styling
+    const livingAnimals = this.simulation.world.getLivingAnimals();
+    const livingIds = new Set(livingAnimals.map(a => a.id));
+    this.sidebar.setLivingAnimalIds(livingIds);
+
     // Refresh selection (entity state may have changed)
     this.selectionManager.refreshSelection(this.simulation.world);
 
@@ -146,9 +199,11 @@ export class UIManager {
 
   private handleReset(): void {
     this.populationHistory.clear();
+    this.actionHistory.clear();
     this.selectionManager.deselect();
     this.sidebar.hide();
     this.controlPanel.syncState(this.simulation);
+    this.infoPanel.resetUptime();
     this.updateInfoPanel();
   }
 
@@ -217,6 +272,7 @@ export class UIManager {
     this.controlPanel.destroy();
     this.sidebar.destroy();
     this.populationGraph.destroy();
+    this.helpDialog.destroy();
     this.renderer.destroy();
 
     window.removeEventListener('resize', this.handleResize.bind(this));

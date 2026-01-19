@@ -45,6 +45,7 @@ export function createRenderer(
   let frameCount = 0;
   let fps = 0;
   let fpsUpdateTime = performance.now();
+  let animationTime = 0;
 
   function updateFPS(): void {
     frameCount++;
@@ -118,7 +119,12 @@ export function createRenderer(
       const screenPos = camera.worldToScreen(corpse.position);
       const radius = corpse.sourceSize * RENDER_SCALE.CORPSE_RADIUS_MULTIPLIER * RENDER_SCALE.ANIMAL_BASE_RADIUS * zoom;
 
-      // Corpse body (X shape)
+      // Calculate fade based on decay timer (more faded as timer decreases)
+      const decayProgress = corpse.decayTimer / config.corpse.CORPSE_DECAY_TICKS;
+      const opacity = Math.max(0.2, decayProgress); // Minimum 20% opacity
+
+      // Corpse body (X shape) with fade
+      ctx.globalAlpha = opacity;
       ctx.strokeStyle = ENTITY_COLORS.corpse.fill;
       ctx.lineWidth = 3 * zoom;
       ctx.beginPath();
@@ -127,6 +133,7 @@ export function createRenderer(
       ctx.moveTo(screenPos.x + radius * 0.7, screenPos.y - radius * 0.7);
       ctx.lineTo(screenPos.x - radius * 0.7, screenPos.y + radius * 0.7);
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
   }
 
@@ -144,14 +151,21 @@ export function createRenderer(
       animal.state.hunger > reproductionThreshold &&
       animal.state.ticksSinceLastReproduction >= config.reproduction.REPRODUCTION_COOLDOWN;
 
-    // Reproduction glow
+    // Reproduction glow with pulsing animation
     if (options.showReproductionGlow && isReproductionReady) {
-      const glowRadius = radius + RENDER_SCALE.REPRODUCTION_GLOW_RADIUS * zoom;
+      // Pulsing effect using sine wave (pulse 1-2 times per second)
+      const pulsePhase = Math.sin(animationTime * 0.004) * 0.5 + 0.5; // 0 to 1
+      const pulseScale = 0.8 + pulsePhase * 0.4; // 0.8 to 1.2
+      const pulseOpacity = 0.5 + pulsePhase * 0.5; // 0.5 to 1.0
+
+      const glowRadius = (radius + RENDER_SCALE.REPRODUCTION_GLOW_RADIUS * zoom) * pulseScale;
       const gradient = ctx.createRadialGradient(
         screenPos.x, screenPos.y, radius,
         screenPos.x, screenPos.y, glowRadius
       );
-      gradient.addColorStop(0, ENTITY_COLORS.ui.reproductionGlow);
+      // Parse the base color and apply pulse opacity
+      const baseColor = ENTITY_COLORS.ui.reproductionGlow.replace(/[\d.]+\)$/, `${0.4 * pulseOpacity})`);
+      gradient.addColorStop(0, baseColor);
       gradient.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient;
       ctx.beginPath();
@@ -262,6 +276,7 @@ export function createRenderer(
   return {
     render(world: World): void {
       updateFPS();
+      animationTime = performance.now();
       clear();
       renderVegetation(world);
       renderCorpses(world);

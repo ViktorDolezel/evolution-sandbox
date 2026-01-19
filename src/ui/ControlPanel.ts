@@ -1,11 +1,14 @@
 import type { Simulation } from '../core/Simulation';
+import type { SimulationConfig } from '../config/types';
 import { createEventEmitter } from '../utils/events';
+import { downloadConfigFile, promptConfigUpload } from '../config/persistence';
 
 export interface ControlPanelEvents {
   playPause: { isPlaying: boolean };
   speedChange: { speed: number };
   reset: void;
   step: void;
+  configImported: { config: SimulationConfig; warnings: string[] };
 }
 
 export interface ControlPanel {
@@ -32,6 +35,10 @@ export function createControlPanel(
       <span id="speed-value">1.0x</span>
     </div>
     <button id="reset-btn" title="Reset simulation">Reset</button>
+    <div class="config-controls">
+      <button id="export-config-btn" title="Export configuration">Export</button>
+      <button id="import-config-btn" title="Import configuration">Import</button>
+    </div>
   `;
 
   const playPauseBtn = container.querySelector('#play-pause-btn') as HTMLButtonElement;
@@ -39,6 +46,8 @@ export function createControlPanel(
   const speedSlider = container.querySelector('#speed-slider') as HTMLInputElement;
   const speedValue = container.querySelector('#speed-value') as HTMLSpanElement;
   const resetBtn = container.querySelector('#reset-btn') as HTMLButtonElement;
+  const exportBtn = container.querySelector('#export-config-btn') as HTMLButtonElement;
+  const importBtn = container.querySelector('#import-config-btn') as HTMLButtonElement;
 
   function updatePlayPauseButton(isPaused: boolean): void {
     playPauseBtn.textContent = isPaused ? 'Play' : 'Pause';
@@ -81,6 +90,24 @@ export function createControlPanel(
       simulation.reset();
       updatePlayPauseButton(true);
       emitter.emit('reset', undefined as unknown as void);
+    }
+  });
+
+  exportBtn.addEventListener('click', () => {
+    downloadConfigFile(simulation.config, 'evolution-sandbox-config.json');
+  });
+
+  importBtn.addEventListener('click', async () => {
+    const result = await promptConfigUpload();
+    if (result && result.success && result.config) {
+      // Show warnings if any
+      if (result.warnings.length > 0) {
+        const warningMsg = 'Config imported with warnings:\n\n' + result.warnings.join('\n');
+        window.alert(warningMsg);
+      }
+      emitter.emit('configImported', { config: result.config, warnings: result.warnings });
+    } else if (result && !result.success) {
+      window.alert('Failed to import config:\n\n' + result.errors.join('\n'));
     }
   });
 

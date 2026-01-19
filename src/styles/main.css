@@ -244,3 +244,178 @@ button:disabled {
 #simulation-canvas:active {
   cursor: grabbing;
 }
+
+/* Action log styles */
+.action-log {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.action-log-entry {
+  padding: 3px 0;
+  color: #aaa;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.action-log-entry:last-child {
+  border-bottom: none;
+}
+
+.action-log-empty {
+  color: #666;
+  font-style: italic;
+  padding: 5px 0;
+}
+
+.show-more-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  font-size: 12px;
+  background: #3a3a5a;
+}
+
+.show-more-btn:hover {
+  background: #4a4a6a;
+}
+
+/* Parent links */
+.parent-link {
+  color: #6eb5ff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.parent-link:hover {
+  color: #9dd1ff;
+  text-decoration: underline;
+}
+
+.text-muted {
+  color: #666;
+}
+
+/* Config controls */
+.config-controls {
+  display: flex;
+  gap: 8px;
+  border-left: 1px solid #555;
+  padding-left: 15px;
+  margin-left: 5px;
+}
+
+.config-controls button {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Help dialog */
+.help-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.help-dialog {
+  background: #1a1a2e;
+  border-radius: 8px;
+  border: 1px solid #333;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.help-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #333;
+  background: rgba(40, 40, 60, 0.8);
+}
+
+.help-dialog-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+}
+
+.help-close-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.help-close-btn:hover {
+  color: #fff;
+  background: transparent;
+}
+
+.help-dialog-content {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(80vh - 60px);
+}
+
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section h3 {
+  color: #888;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.help-table tr {
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.help-table tr:last-child {
+  border-bottom: none;
+}
+
+.help-table td {
+  padding: 8px 0;
+  color: #ccc;
+  font-size: 13px;
+}
+
+.help-key {
+  width: 120px;
+}
+
+.help-table kbd {
+  background: #3a3a5a;
+  border: 1px solid #4a4a6a;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #fff;
+}

@@ -21,12 +21,12 @@ describe('Config defaults', () => {
     describe('world config', () => {
       it('has correct WORLD_WIDTH default', () => {
         const config = getDefaultConfig();
-        expect(config.world.WORLD_WIDTH).toBe(1000);
+        expect(config.world.WORLD_WIDTH).toBe(500);
       });
 
       it('has correct WORLD_HEIGHT default', () => {
         const config = getDefaultConfig();
-        expect(config.world.WORLD_HEIGHT).toBe(800);
+        expect(config.world.WORLD_HEIGHT).toBe(400);
       });
 
       it('has correct VEGETATION_TILE_SIZE default', () => {
@@ -41,12 +41,12 @@ describe('Config defaults', () => {
 
       it('has correct INITIAL_DEER_COUNT default', () => {
         const config = getDefaultConfig();
-        expect(config.world.INITIAL_DEER_COUNT).toBe(20);
+        expect(config.world.INITIAL_DEER_COUNT).toBe(200);
       });
 
       it('has correct INITIAL_WOLF_COUNT default', () => {
         const config = getDefaultConfig();
-        expect(config.world.INITIAL_WOLF_COUNT).toBe(5);
+        expect(config.world.INITIAL_WOLF_COUNT).toBe(200);
       });
 
       it('has correct INITIAL_SPAWN_MIN_DISTANCE default', () => {
@@ -58,17 +58,17 @@ describe('Config defaults', () => {
     describe('vegetation config', () => {
       it('has correct INITIAL_VEGETATION_DENSITY default', () => {
         const config = getDefaultConfig();
-        expect(config.vegetation.INITIAL_VEGETATION_DENSITY).toBe(0.4);
+        expect(config.vegetation.INITIAL_VEGETATION_DENSITY).toBe(0.3);
       });
 
       it('has correct VEGETATION_SPREAD_RATE default', () => {
         const config = getDefaultConfig();
-        expect(config.vegetation.VEGETATION_SPREAD_RATE).toBe(0.05);
+        expect(config.vegetation.VEGETATION_SPREAD_RATE).toBe(0.005);
       });
 
       it('has correct VEGETATION_FOOD_VALUE default', () => {
         const config = getDefaultConfig();
-        expect(config.vegetation.VEGETATION_FOOD_VALUE).toBe(20);
+        expect(config.vegetation.VEGETATION_FOOD_VALUE).toBe(5);
       });
     });
 
@@ -131,7 +131,7 @@ describe('Config defaults', () => {
 
       it('has correct REPRODUCTION_COOLDOWN default', () => {
         const config = getDefaultConfig();
-        expect(config.reproduction.REPRODUCTION_COOLDOWN).toBe(100);
+        expect(config.reproduction.REPRODUCTION_COOLDOWN).toBe(10);
       });
 
       it('has correct OFFSPRING_SPAWN_OFFSET_MAX default', () => {
@@ -172,7 +172,7 @@ describe('Config defaults', () => {
     describe('performance config', () => {
       it('has correct MAX_ENTITIES default', () => {
         const config = getDefaultConfig();
-        expect(config.performance.MAX_ENTITIES).toBe(2000);
+        expect(config.performance.MAX_ENTITIES).toBe(5000);
       });
 
       it('has correct ENTITY_WARNING_THRESHOLD default', () => {
@@ -217,12 +217,12 @@ describe('Config defaults', () => {
   describe('getConfigValue', () => {
     it('retrieves nested config value', () => {
       const config = getDefaultConfig();
-      expect(getConfigValue(config, 'world', 'WORLD_WIDTH')).toBe(1000);
+      expect(getConfigValue(config, 'world', 'WORLD_WIDTH')).toBe(500);
     });
 
     it('works for all config categories', () => {
       const config = getDefaultConfig();
-      expect(getConfigValue(config, 'vegetation', 'VEGETATION_FOOD_VALUE')).toBe(20);
+      expect(getConfigValue(config, 'vegetation', 'VEGETATION_FOOD_VALUE')).toBe(5);
       expect(getConfigValue(config, 'entities', 'MAX_HUNGER')).toBe(100);
     });
   });

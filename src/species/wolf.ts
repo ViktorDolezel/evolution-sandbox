@@ -24,6 +24,6 @@ export const WOLF_BEHAVIORAL_ATTRIBUTES: BehavioralAttributes = {
 
 export const WOLF_LIFECYCLE_ATTRIBUTES: LifecycleAttributes = {
   maxAge: 1000,
-  maturityAge: 80,
+  maturityAge: 5,
   litterSize: 2,
 };

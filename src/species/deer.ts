@@ -24,6 +24,6 @@ export const DEER_BEHAVIORAL_ATTRIBUTES: BehavioralAttributes = {
 
 export const DEER_LIFECYCLE_ATTRIBUTES: LifecycleAttributes = {
   maxAge: 800,
-  maturityAge: 50,
+  maturityAge: 10,
   litterSize: 1,
 };

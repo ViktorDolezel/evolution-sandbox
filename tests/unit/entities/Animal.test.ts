@@ -263,7 +263,7 @@ describe('Animal', () => {
         config,
         deerIdGen
       );
-      animal.state.age = 10; // Not mature
+      animal.state.age = 5; // Not mature (maturityAge is 10)
       animal.state.hunger = 100; // Full hunger
       animal.state.ticksSinceLastReproduction = 1000; // Past cooldown
 
@@ -292,7 +292,7 @@ describe('Animal', () => {
       );
       animal.state.age = 100;
       animal.state.hunger = 100;
-      animal.state.ticksSinceLastReproduction = 50; // Still in cooldown (100 required)
+      animal.state.ticksSinceLastReproduction = 5; // Still in cooldown (10 required)
 
       expect(isReproductionReady(animal, config)).toBe(false);
     });

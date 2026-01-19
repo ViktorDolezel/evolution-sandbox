@@ -13,6 +13,7 @@ export interface Camera {
   screenToWorld(screenPos: Vector2): Vector2;
   setPosition(pos: Vector2): void;
   pan(delta: Vector2): void;
+  panToPosition(worldPos: Vector2): void;
   setZoom(zoom: number): void;
   zoomBy(factor: number, focalPoint?: Vector2): void;
   setViewportSize(width: number, height: number): void;
@@ -68,6 +69,10 @@ export function createCamera(
         x: position.x - delta.x / zoom,
         y: position.y - delta.y / zoom,
       };
+    },
+
+    panToPosition(worldPos: Vector2): void {
+      position = { ...worldPos };
     },
 
     setZoom(z: number): void {

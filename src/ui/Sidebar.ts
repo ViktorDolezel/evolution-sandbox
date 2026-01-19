@@ -1,10 +1,19 @@
-import type { Animal, Corpse } from '../entities/types';
+import type { Animal, Corpse, ActionLogEntry } from '../entities/types';
 import type { SelectionManager } from './SelectionManager';
 import type { SimulationConfig } from '../config/types';
+import type { ActionHistory } from '../data/ActionHistory';
+import type { EntityId } from '../utils/id';
+
+export interface SidebarCallbacks {
+  onParentClick?: (parentId: EntityId) => void;
+}
 
 export interface Sidebar {
   updateAnimal(animal: Animal | null): void;
   updateCorpse(corpse: Corpse | null): void;
+  setActionHistory(history: ActionHistory): void;
+  setCallbacks(callbacks: SidebarCallbacks): void;
+  setLivingAnimalIds(ids: Set<EntityId>): void;
   show(): void;
   hide(): void;
   isVisible(): boolean;
@@ -17,9 +26,62 @@ export function createSidebar(
   config: SimulationConfig
 ): Sidebar {
   let visible = false;
+  let actionHistory: ActionHistory | null = null;
+  let callbacks: SidebarCallbacks = {};
+  let livingAnimalIds = new Set<EntityId>();
+  let currentAnimalId: EntityId | null = null;
+  let showAllActions = false;
 
   function formatNumber(n: number, decimals: number = 2): string {
     return n.toFixed(decimals);
+  }
+
+  function renderParentLink(parentId: EntityId | null): string {
+    if (!parentId) {
+      return 'None (initial)';
+    }
+    const isAlive = livingAnimalIds.has(parentId);
+    if (isAlive) {
+      return `<a href="#" class="parent-link" data-parent-id="${parentId}">${parentId}</a>`;
+    }
+    return `<span class="text-muted">${parentId} (deceased)</span>`;
+  }
+
+  function renderActionLogSection(animalId: EntityId): string {
+    if (!actionHistory) {
+      return '';
+    }
+
+    const limit = showAllActions ? 50 : 10;
+    const entries = actionHistory.getHistory(animalId, limit);
+
+    if (entries.length === 0) {
+      return `
+        <div class="sidebar-section">
+          <h4>Recent Actions</h4>
+          <div class="action-log-empty">No actions recorded yet</div>
+        </div>
+      `;
+    }
+
+    const reversedEntries = [...entries].reverse();
+    const actionItems = reversedEntries.map(entry =>
+      `<div class="action-log-entry">[${entry.tick}] ${entry.action} - ${entry.details}</div>`
+    ).join('');
+
+    const showMoreBtn = !showAllActions && entries.length >= 10
+      ? `<button class="show-more-btn" id="show-more-actions">Show More</button>`
+      : '';
+
+    return `
+      <div class="sidebar-section">
+        <h4>Recent Actions</h4>
+        <div class="action-log">
+          ${actionItems}
+        </div>
+        ${showMoreBtn}
+      </div>
+    `;
   }
 
   function renderAnimalContent(animal: Animal): string {
@@ -101,8 +163,8 @@ export function createSidebar(
       <div class="sidebar-section">
         <h4>Lineage</h4>
         <div class="stat-row"><span>Generation:</span><span>${animal.generation}</span></div>
-        <div class="stat-row"><span>Parent 1:</span><span>${animal.parentIds[0] || 'None (initial)'}</span></div>
-        <div class="stat-row"><span>Parent 2:</span><span>${animal.parentIds[1] || 'None (initial)'}</span></div>
+        <div class="stat-row"><span>Parent 1:</span><span>${renderParentLink(animal.parentIds[0])}</span></div>
+        <div class="stat-row"><span>Parent 2:</span><span>${renderParentLink(animal.parentIds[1])}</span></div>
       </div>
 
       <div class="sidebar-section">
@@ -111,6 +173,8 @@ export function createSidebar(
         <div class="stat-row"><span>Animals:</span><span class="${animal.diet.canEatAnimals ? 'text-green' : 'text-red'}">${animal.diet.canEatAnimals ? 'Yes' : 'No'}</span></div>
         <div class="stat-row"><span>Corpses:</span><span class="${animal.diet.canEatCorpses ? 'text-green' : 'text-red'}">${animal.diet.canEatCorpses ? 'Yes' : 'No'}</span></div>
       </div>
+
+      ${renderActionLogSection(animal.id)}
     `;
   }
 
@@ -147,11 +211,39 @@ export function createSidebar(
     `;
   }
 
-  function attachCloseHandler(): void {
+  function attachEventHandlers(): void {
+    // Close button
     const closeBtn = container.querySelector('#sidebar-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
         selectionManager.deselect();
+      });
+    }
+
+    // Parent links
+    const parentLinks = container.querySelectorAll('.parent-link');
+    parentLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const parentId = (e.target as HTMLElement).dataset.parentId;
+        if (parentId && callbacks.onParentClick) {
+          callbacks.onParentClick(parentId as EntityId);
+        }
+      });
+    });
+
+    // Show more actions button
+    const showMoreBtn = container.querySelector('#show-more-actions');
+    if (showMoreBtn) {
+      showMoreBtn.addEventListener('click', () => {
+        showAllActions = true;
+        if (currentAnimalId) {
+          const animal = selectionManager.getSelectedAnimal();
+          if (animal) {
+            container.innerHTML = renderAnimalContent(animal);
+            attachEventHandlers();
+          }
+        }
       });
     }
   }
@@ -162,8 +254,13 @@ export function createSidebar(
         this.hide();
         return;
       }
+      // Reset showAllActions when switching animals
+      if (currentAnimalId !== animal.id) {
+        showAllActions = false;
+      }
+      currentAnimalId = animal.id;
       container.innerHTML = renderAnimalContent(animal);
-      attachCloseHandler();
+      attachEventHandlers();
       this.show();
     },
 
@@ -172,9 +269,22 @@ export function createSidebar(
         this.hide();
         return;
       }
+      currentAnimalId = null;
       container.innerHTML = renderCorpseContent(corpse);
-      attachCloseHandler();
+      attachEventHandlers();
       this.show();
+    },
+
+    setActionHistory(history: ActionHistory): void {
+      actionHistory = history;
+    },
+
+    setCallbacks(newCallbacks: SidebarCallbacks): void {
+      callbacks = newCallbacks;
+    },
+
+    setLivingAnimalIds(ids: Set<EntityId>): void {
+      livingAnimalIds = ids;
     },
 
     show(): void {

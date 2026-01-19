@@ -5,6 +5,7 @@ import type { SpatialIndex, SpatialEntity } from '../spatial/SpatialIndex';
 import type { EntityManager } from '../entities/EntityManager';
 import type { RandomGenerator } from './SeededRandom';
 import type { Action } from '../behavior/types';
+import type { ActionHistory } from '../data/ActionHistory';
 import { makeDecision, canKill } from '../behavior/DecisionEngine';
 import { createCorpseFromAnimal, decayCorpse, isCorpseExhausted } from '../entities/Corpse';
 import { applyHungerDecay, applyMovementCost, updateAnimalState, createAnimal } from '../entities/Animal';
@@ -12,6 +13,7 @@ import { createOffspringAttributes } from '../genetics/inheritance';
 import { distance, normalize, subtract } from '../utils/vector';
 import { createIdGenerator } from '../utils/id';
 import { clamp } from '../utils/math';
+import { formatActionDetails } from '../data/ActionHistory';
 
 export interface TickResult {
   tick: number;
@@ -29,6 +31,7 @@ export interface TickContext {
   config: SimulationConfig;
   rng: RandomGenerator;
   currentTick: number;
+  actionHistory?: ActionHistory;
 }
 
 /**
@@ -102,7 +105,7 @@ export function executeExecutionPhase(
   context: TickContext,
   decisions: Map<string, Action>
 ): Omit<TickResult, 'tick' | 'decisions'> {
-  const { entityManager, vegetationGrid, animalSpatialIndex, config, rng, currentTick } = context;
+  const { entityManager, vegetationGrid, animalSpatialIndex, config, rng, currentTick, actionHistory } = context;
 
   const deaths: string[] = [];
   const births: Animal[] = [];
@@ -169,10 +172,10 @@ export function executeExecutionPhase(
             entityManager.updateAnimal(animal.id, updatedAnimal);
           }
         } else if (action.details === 'corpse' && action.targetId) {
-          // Eat corpse
+          // Eat corpse - can eat up to MAX_HUNGER (per PRD 6.4)
           const corpse = entityManager.getCorpse(action.targetId);
           if (corpse && corpse.foodValue > 0) {
-            const amountToEat = Math.min(corpse.foodValue, 20); // Eat up to 20 per tick
+            const amountToEat = Math.min(corpse.foodValue, config.entities.MAX_HUNGER - animal.state.hunger);
             const newHunger = Math.min(
               config.entities.MAX_HUNGER,
               animal.state.hunger + amountToEat
@@ -277,8 +280,8 @@ export function executeExecutionPhase(
               births.push(offspring);
             }
 
-            // Apply reproduction cost to both parents
-            const hungerCost = config.reproduction.REPRODUCTION_COST * config.entities.MAX_HUNGER;
+            // Apply reproduction cost to both parents (cost scales with litter size)
+            const hungerCost = config.reproduction.REPRODUCTION_COST * litterSize * config.entities.MAX_HUNGER;
             const parent1Hunger = Math.max(0, animal.state.hunger - hungerCost);
             const parent2Hunger = Math.max(0, mate.state.hunger - hungerCost);
 
@@ -320,6 +323,12 @@ export function executeExecutionPhase(
         entityManager.updateAnimal(animal.id, updatedAnimal);
         break;
       }
+    }
+
+    // Log action to history
+    if (actionHistory) {
+      const details = formatActionDetails(action.type, action.targetId, action.details);
+      actionHistory.record(animal.id, currentTick, action.type, details);
     }
   }
 

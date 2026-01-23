@@ -345,7 +345,7 @@ export function createConfigPanel(
       const content = overlay.querySelector('.config-panel-content');
       if (content) {
         content.innerHTML = renderCategories();
-        attachPropertyHandlers();
+        attachPropertyHandlers(overlay);
       }
       updateFooter();
     }
@@ -388,11 +388,9 @@ export function createConfigPanel(
     emitter.emit('resetToDefaults', undefined as unknown as void);
   }
 
-  function attachPropertyHandlers(): void {
-    if (!overlay) return;
-
+  function attachPropertyHandlers(container: HTMLElement): void {
     // Slider handlers
-    overlay.querySelectorAll('.config-slider').forEach((slider) => {
+    container.querySelectorAll('.config-slider').forEach((slider) => {
       slider.addEventListener('input', (e) => {
         const el = e.target as HTMLInputElement;
         const category = el.dataset.category!;
@@ -400,7 +398,7 @@ export function createConfigPanel(
         const value = parseFloat(el.value);
 
         // Sync number input
-        const input = overlay!.querySelector(
+        const input = container.querySelector(
           `.config-input[data-category="${category}"][data-key="${key}"]`
         ) as HTMLInputElement;
         if (input) input.value = el.value;
@@ -410,7 +408,7 @@ export function createConfigPanel(
     });
 
     // Number input handlers
-    overlay.querySelectorAll('.config-input').forEach((input) => {
+    container.querySelectorAll('.config-input').forEach((input) => {
       input.addEventListener('change', (e) => {
         const el = e.target as HTMLInputElement;
         const category = el.dataset.category!;
@@ -418,7 +416,7 @@ export function createConfigPanel(
         const value = parseFloat(el.value);
 
         // Sync slider
-        const slider = overlay!.querySelector(
+        const slider = container.querySelector(
           `.config-slider[data-category="${category}"][data-key="${key}"]`
         ) as HTMLInputElement;
         if (slider) slider.value = el.value;
@@ -428,7 +426,7 @@ export function createConfigPanel(
     });
 
     // Reset property buttons
-    overlay.querySelectorAll('.reset-property-btn').forEach((btn) => {
+    container.querySelectorAll('.reset-property-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const el = e.target as HTMLButtonElement;
         const category = el.dataset.category!;
@@ -441,7 +439,7 @@ export function createConfigPanel(
     });
 
     // Category headers (expand/collapse)
-    overlay.querySelectorAll('.config-category-header').forEach((header) => {
+    container.querySelectorAll('.config-category-header').forEach((header) => {
       header.addEventListener('click', (e) => {
         const el = e.currentTarget as HTMLElement;
         const category = el.dataset.category!;
@@ -533,7 +531,7 @@ export function createConfigPanel(
       applyResetBtn.addEventListener('click', applyPendingChangesAndReset);
     }
 
-    attachPropertyHandlers();
+    attachPropertyHandlers(div);
 
     return div;
   }
@@ -572,7 +570,7 @@ export function createConfigPanel(
         const content = overlay.querySelector('.config-panel-content');
         if (content) {
           content.innerHTML = renderCategories();
-          attachPropertyHandlers();
+          attachPropertyHandlers(overlay);
         }
       }
     },

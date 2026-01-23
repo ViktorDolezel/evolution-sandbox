@@ -7,6 +7,7 @@ export interface HelpDialog {
 
 const KEYBOARD_SHORTCUTS = [
   { key: 'Space', description: 'Play/Pause simulation' },
+  { key: 'C', description: 'Open configuration panel' },
   { key: 'I', description: 'Toggle info panel' },
   { key: 'G', description: 'Toggle population graph' },
   { key: 'V', description: 'Toggle world visualization' },

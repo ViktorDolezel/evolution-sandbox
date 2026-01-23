@@ -14,6 +14,7 @@ export interface InputHandlerCallbacks {
   onToggleGraph?: () => void;
   onToggleVisualization?: () => void;
   onShowHelp?: () => void;
+  onShowConfig?: () => void;
 }
 
 export interface InputHandler {
@@ -222,6 +223,14 @@ export function createInputHandler(
         e.preventDefault();
         if (callbacks.onShowHelp) {
           callbacks.onShowHelp();
+        }
+        break;
+
+      case 'c':
+      case 'C':
+        e.preventDefault();
+        if (callbacks.onShowConfig) {
+          callbacks.onShowConfig();
         }
         break;
     }

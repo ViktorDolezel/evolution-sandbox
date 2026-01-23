@@ -8,8 +8,10 @@ import { createControlPanel, type ControlPanel } from './ControlPanel';
 import { createSidebar, type Sidebar } from './Sidebar';
 import { createPopulationGraph, type PopulationGraph } from './PopulationGraph';
 import { createHelpDialog, type HelpDialog } from './HelpDialog';
+import { createConfigPanel, type ConfigPanel } from './ConfigPanel';
 import { createPopulationHistory, type PopulationHistory } from '../data/PopulationHistory';
 import { createActionHistory, type ActionHistory } from '../data/ActionHistory';
+import type { SimulationConfig } from '../config/types';
 
 export class UIManager {
   private simulation: Simulation;
@@ -26,6 +28,7 @@ export class UIManager {
   private populationHistory: PopulationHistory;
   private actionHistory: ActionHistory;
   private helpDialog: HelpDialog;
+  private configPanel: ConfigPanel;
 
   private animationFrameId: number | null = null;
   private isInitialized = false;
@@ -98,6 +101,18 @@ export class UIManager {
     // Create help dialog
     this.helpDialog = createHelpDialog();
 
+    // Create config panel
+    this.configPanel = createConfigPanel(
+      () => this.simulation.config,
+      (category, key, value) => {
+        // Apply config change directly to simulation config
+        (this.simulation.config[category as keyof SimulationConfig] as unknown as Record<string, number>)[key] = value;
+      },
+      () => {
+        this.simulation.reset();
+      }
+    );
+
     // Set up keyboard shortcut callbacks
     this.inputHandler.setCallbacks({
       onToggleInfoPanel: () => {
@@ -123,6 +138,9 @@ export class UIManager {
       },
       onToggleVisualization: () => {
         this.controlPanel.toggleVisualization();
+      },
+      onShowConfig: () => {
+        this.configPanel.toggle();
       },
     });
 
@@ -214,6 +232,8 @@ export class UIManager {
     this.selectionManager.deselect();
     this.sidebar.hide();
     this.controlPanel.syncState(this.simulation);
+    this.configPanel.syncConfig(this.simulation.config);
+    this.configPanel.clearPendingChanges();
     this.infoPanel.resetUptime();
     this.updateInfoPanel();
   }
@@ -284,6 +304,7 @@ export class UIManager {
     this.sidebar.destroy();
     this.populationGraph.destroy();
     this.helpDialog.destroy();
+    this.configPanel.destroy();
     this.renderer.destroy();
 
     window.removeEventListener('resize', this.handleResize.bind(this));

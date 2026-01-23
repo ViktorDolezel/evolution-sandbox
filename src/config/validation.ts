@@ -8,12 +8,12 @@ export interface ValidationResult {
   clampedConfig: SimulationConfig;
 }
 
-interface ConfigRange {
+export interface ConfigRange {
   min: number;
   max: number;
 }
 
-const CONFIG_RANGES: Record<string, Record<string, ConfigRange>> = {
+export const CONFIG_RANGES: Record<string, Record<string, ConfigRange>> = {
   world: {
     WORLD_WIDTH: { min: 500, max: 5000 },
     WORLD_HEIGHT: { min: 400, max: 4000 },

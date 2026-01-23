@@ -103,22 +103,24 @@ describe('Config validation', () => {
     });
 
     it('overrides specific values while keeping defaults', () => {
+      const defaults = getDefaultConfig();
       const result = mergeWithDefaults({
         world: { WORLD_WIDTH: 2000 } as any,
       });
 
       expect(result.world.WORLD_WIDTH).toBe(2000);
-      expect(result.world.WORLD_HEIGHT).toBe(400); // Default
+      expect(result.world.WORLD_HEIGHT).toBe(defaults.world.WORLD_HEIGHT);
     });
 
     it('handles deeply nested partial configs', () => {
+      const defaults = getDefaultConfig();
       const result = mergeWithDefaults({
         evolution: { BASE_MUTATION_RATE: 0.1 } as any,
         vegetation: { VEGETATION_FOOD_VALUE: 30 } as any,
       });
 
       expect(result.evolution.BASE_MUTATION_RATE).toBe(0.1);
-      expect(result.evolution.BEHAVIORAL_MUTATION_RATE).toBe(0.10); // Default
+      expect(result.evolution.BEHAVIORAL_MUTATION_RATE).toBe(defaults.evolution.BEHAVIORAL_MUTATION_RATE);
       expect(result.vegetation.VEGETATION_FOOD_VALUE).toBe(30);
     });
   });
